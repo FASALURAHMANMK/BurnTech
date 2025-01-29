@@ -1,0 +1,7 @@
+{
+    "terminal.explorerKind": "both",
+    "terminal.integrated.automationProfile.windows": {
+
+    },
+    "git.autofetch": true
+}
