@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "49264180262",
+    "project_id": "burntech-b8a21",
+    "storage_bucket": "burntech-b8a21.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:49264180262:android:a6c4706b2d644fce20fae7",
+        "android_client_info": {
+          "package_name": "com.example.burn_tech"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDhWKta8LjGD2MaUfoFXxE84LrreiPhke4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
