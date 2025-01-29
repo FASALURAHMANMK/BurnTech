@@ -2,9 +2,11 @@ import 'package:burn_tech/screens/auth/login_screen.dart';
 import 'package:burn_tech/screens/home/home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
-void main() {
+import 'package:firebase_core/firebase_core.dart';
+import 'package:burn_tech/models/color.dart';
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
   runApp(const MyApp());
 }
 
@@ -48,9 +50,9 @@ class _MyAppState extends State<MyApp> {
     // If we have a stored UID, go to HomeScreen; otherwise, go to LoginScreen
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'BurnTech Demo',
+      title: 'BurnTech',
       theme: ThemeData(
-        primarySwatch: Colors.deepPurple,
+        primarySwatch:desertOrange,
       ),
       home: _storedUid == null ? const LoginScreen() : const HomeScreen(),
     );

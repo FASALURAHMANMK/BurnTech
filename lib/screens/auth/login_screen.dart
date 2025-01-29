@@ -2,6 +2,7 @@ import 'package:burn_tech/screens/home/home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:burn_tech/models/color.dart';
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -87,7 +88,7 @@ class _LoginScreenState extends State<LoginScreen> {
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
-                colors: [Color(0xFF4A148C), Color(0xFF880E4F)],
+                colors: [Color.fromRGBO(250, 139, 0, 1), Color.fromRGBO(248, 51, 60, 1)],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
               ),
@@ -112,7 +113,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         style: TextStyle(
                           fontSize: 28,
                           fontWeight: FontWeight.bold,
-                          color: Colors.deepPurple,
+                          color: desertOrange,
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -122,8 +123,12 @@ class _LoginScreenState extends State<LoginScreen> {
                         keyboardType: TextInputType.emailAddress,
                         decoration: const InputDecoration(
                           labelText: 'Email',
+                          labelStyle: TextStyle(color:desertOrange),
                           prefixIcon: Icon(Icons.email),
                           border: OutlineInputBorder(),
+                           focusedBorder: OutlineInputBorder(
+        borderSide: BorderSide(color: desertOrange, width: 2.0),
+      ),
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
@@ -139,8 +144,12 @@ class _LoginScreenState extends State<LoginScreen> {
                         obscureText: true,
                         decoration: const InputDecoration(
                           labelText: 'Password',
+                          labelStyle: TextStyle(color:desertOrange),
                           prefixIcon: Icon(Icons.lock),
                           border: OutlineInputBorder(),
+                           focusedBorder: OutlineInputBorder(
+        borderSide: BorderSide(color: desertOrange, width: 2.0),
+      ),
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
@@ -157,7 +166,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           onPressed: _goToForgotPassword,
                           child: const Text(
                             'Forgot Password?',
-                            style: TextStyle(color: Colors.deepPurple),
+                            style: TextStyle(color: desertOrange),
                           ),
                         ),
                       ),
@@ -168,7 +177,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         height: 48,
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.deepPurple,
+                            backgroundColor: desertOrange,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
                             ),
@@ -180,7 +189,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 )
                               : const Text(
                                   'LOGIN',
-                                  style: TextStyle(fontSize: 16),
+                                  style: TextStyle(fontSize: 16,color: Colors.white),
                                 ),
                         ),
                       ),
@@ -207,7 +216,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             child: const Text(
                               "Sign Up",
                               style: TextStyle(
-                                color: Colors.deepPurple,
+                                color: desertOrange,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),

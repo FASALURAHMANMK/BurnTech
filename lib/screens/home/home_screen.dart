@@ -1,9 +1,3 @@
-
-
-
-
-
-
 import 'package:burn_tech/screens/auth/login_screen.dart';
 import 'package:burn_tech/screens/home/camps_screen.dart';
 import 'package:burn_tech/screens/home/chat_screen.dart';
@@ -11,7 +5,7 @@ import 'package:burn_tech/screens/home/map_screen.dart';
 import 'package:burn_tech/screens/home/profile_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
+import 'package:burn_tech/models/color.dart';
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -55,14 +49,14 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       // Match gradient style in AppBar or a custom container
       appBar: AppBar(
-        title: const Text('BurnTech Home'),
-        backgroundColor: Colors.deepPurple,
+        title: const Text('BurnTech',style: TextStyle(color: Colors.white,fontWeight: FontWeight.bold),),
+        backgroundColor: desertOrange,
       ),
       body: _pages[_currentIndex],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: _onTabTapped,
-        selectedItemColor: Colors.deepPurple,
+        selectedItemColor: desertOrange,
         unselectedItemColor: Colors.grey,
         items: const [
           BottomNavigationBarItem(
@@ -97,9 +91,10 @@ class HomeTab extends StatelessWidget {
   Widget build(BuildContext context) {
     // Similar gradient style as the login screen
     return Container(
+      height: 600,
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          colors: [Color(0xFF4A148C), Color(0xFF880E4F)],
+          colors: [Color.fromRGBO(250, 139, 0, 1), Color.fromRGBO(248, 51, 60, 1)],
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
         ),
@@ -112,7 +107,7 @@ class HomeTab extends StatelessWidget {
             Card(
               color: Colors.white.withOpacity(0.9),
               child: ListTile(
-                leading: const Icon(Icons.cabin, color: Colors.deepPurple),
+                leading: const Icon(Icons.cabin, color: desertOrange),
                 title: const Text(
                   'My Camps',
                   style: TextStyle(fontWeight: FontWeight.bold),
@@ -130,7 +125,7 @@ class HomeTab extends StatelessWidget {
             Card(
               color: Colors.white.withOpacity(0.9),
               child: ListTile(
-                leading: const Icon(Icons.event, color: Colors.deepPurple),
+                leading: const Icon(Icons.event, color: desertOrange),
                 title: const Text(
                   'Upcoming Events',
                   style: TextStyle(fontWeight: FontWeight.bold),
@@ -147,7 +142,7 @@ class HomeTab extends StatelessWidget {
             Card(
               color: Colors.white.withOpacity(0.9),
               child: ListTile(
-                leading: const Icon(Icons.location_on, color: Colors.deepPurple),
+                leading: const Icon(Icons.location_on, color: desertOrange),
                 title: const Text(
                   'Nearby Camps',
                   style: TextStyle(fontWeight: FontWeight.bold),
@@ -164,7 +159,7 @@ class HomeTab extends StatelessWidget {
             Card(
               color: Colors.white.withOpacity(0.9),
               child: ListTile(
-                leading: const Icon(Icons.campaign, color: Colors.deepPurple),
+                leading: const Icon(Icons.campaign, color: desertOrange),
                 title: const Text(
                   'Announcements',
                   style: TextStyle(fontWeight: FontWeight.bold),
