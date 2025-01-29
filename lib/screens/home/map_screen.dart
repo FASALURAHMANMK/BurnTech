@@ -95,7 +95,7 @@ Future<void> _drawRoute() async {
     request: PolylineRequest(
       origin: PointLatLng(_currentPosition!.latitude, _currentPosition!.longitude),
       destination: PointLatLng(_selectedMarkerPosition!.latitude, _selectedMarkerPosition!.longitude),
-      mode: TravelMode.driving,
+      mode: TravelMode.walking,
     ),
   );
 
