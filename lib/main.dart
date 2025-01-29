@@ -10,7 +10,7 @@ void main() {
 
 /// Root widget that decides which screen to load based on SharedPreferences
 class MyApp extends StatefulWidget {
-  const MyApp({Key? key}) : super(key: key);
+  const MyApp({super.key});
 
   @override
   State<MyApp> createState() => _MyAppState();

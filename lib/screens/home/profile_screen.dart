@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class ProfileTab extends StatelessWidget {
   final Future<void> Function() onLogout;
-  const ProfileTab({Key? key, required this.onLogout}) : super(key: key);
+  const ProfileTab({super.key, required this.onLogout});
 
   @override
   Widget build(BuildContext context) {
