@@ -16,15 +16,11 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _passwordController = TextEditingController();
 
   bool _isLoading = false;
-
-  /// Example login function using Firebase Authentication
-  /// or any custom auth logic you have.
+  
   Future<void> _loginUser(String email, String password) async {
     setState(() => _isLoading = true);
 
     try {
-      // Example with FirebaseAuth (if you have it configured).
-      // Otherwise, replace with your custom authentication logic.
       final UserCredential userCredential = await FirebaseAuth.instance
           .signInWithEmailAndPassword(email: email, password: password);
 
