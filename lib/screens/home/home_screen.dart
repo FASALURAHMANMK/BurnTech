@@ -1,3 +1,4 @@
+import 'package:burn_tech/models/camp_location.dart';
 import 'package:burn_tech/screens/auth/login_screen.dart';
 import 'package:burn_tech/screens/home/camps_screen.dart';
 import 'package:burn_tech/screens/home/chat_screen.dart';
@@ -15,11 +16,15 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
-
+final camps = [
+  CampLocation(name: 'Camp A', latitude: 40.787, longitude: -119.203),
+  CampLocation(name: 'Camp B', latitude: 40.786, longitude: -119.208),
+  // Add more camps...
+];
   // We define 5 tabs to match the bottom navbar
   late final List<Widget> _pages = [
     const HomeTab(),
-    const MapTab(),
+    MapTab(campLocations: camps),
     const CampsTab(),
     const ChatTab(),
     ProfileTab(onLogout: _handleLogout),
