@@ -1,39 +1,54 @@
+import 'package:burn_tech/screens/home/home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+class LoginScreen extends StatefulWidget {
+  const LoginScreen({Key? key}) : super(key: key);
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
+  State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _LoginScreenState extends State<LoginScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
   bool _isLoading = false;
 
-  /// The login logic (from your snippet)
-  void _loginUser(String email, String password) async {
+  /// Example login function using Firebase Authentication
+  /// or any custom auth logic you have.
+  Future<void> _loginUser(String email, String password) async {
     setState(() => _isLoading = true);
+
     try {
-      UserCredential userCredential = await FirebaseAuth.instance
+      // Example with FirebaseAuth (if you have it configured).
+      // Otherwise, replace with your custom authentication logic.
+      final UserCredential userCredential = await FirebaseAuth.instance
           .signInWithEmailAndPassword(email: email, password: password);
-          String uid = userCredential.user!.uid;
-          String Name = userCredential.user!.displayName ?? 'Unknown';
-           final SharedPreferences prefs = await SharedPreferences.getInstance();
+
+      final String uid = userCredential.user!.uid;
+
+      // Save the uid in SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
       await prefs.setString('uid', uid);
-      await prefs.setString('name', Name);
-      // Navigate to your Home Screen or Dashboard
-      // Navigator.pushReplacementNamed(context, '/home');
-    } catch (e) {
-      // Handle errors (e.g. display a snackbar)
+
+      // Navigate to HomeScreen
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+        );
+      }
+    } on FirebaseAuthException catch (e) {
+      // Show error message
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.toString()),
-        ),
+        SnackBar(content: Text('Login Error: ${e.message}')),
+      );
+    } catch (e) {
+      // General error catch
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
       );
     } finally {
       setState(() => _isLoading = false);
@@ -49,17 +64,27 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
+  void _goToSignUp() {
+    // TODO: Implement or navigate to a real SignUp screen
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('SignUp Screen not implemented')),
+    );
+  }
+
+  void _goToForgotPassword() {
+    // TODO: Implement or navigate to a real Forgot Password screen
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Forgot Password Screen not implemented')),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
-    
     return Scaffold(
       body: Stack(
         children: [
-          // Background Gradient or Image
+          // Background Gradient
           Container(
-            width: double.infinity,
-            height: double.infinity,
             decoration: const BoxDecoration(
               gradient: LinearGradient(
                 colors: [Color(0xFF4A148C), Color(0xFF880E4F)],
@@ -69,13 +94,11 @@ class _LoginPageState extends State<LoginPage> {
             ),
           ),
 
-          // Centered Card for Login Form
           Center(
             child: SingleChildScrollView(
               child: Container(
                 margin: const EdgeInsets.symmetric(horizontal: 24),
                 padding: const EdgeInsets.all(24),
-                width: size.width * 0.9,
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.9),
                   borderRadius: BorderRadius.circular(16),
@@ -84,7 +107,6 @@ class _LoginPageState extends State<LoginPage> {
                   key: _formKey,
                   child: Column(
                     children: [
-                      // Title or Logo
                       const Text(
                         "Welcome Back!",
                         style: TextStyle(
@@ -95,7 +117,6 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Email TextField
                       TextFormField(
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
@@ -113,7 +134,6 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Password TextField
                       TextFormField(
                         controller: _passwordController,
                         obscureText: true,
@@ -131,24 +151,18 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Forgot Password
                       Align(
                         alignment: Alignment.centerRight,
                         child: TextButton(
-                          onPressed: () {
-                            // TODO: Navigate to forgot password screen
-                            // Navigator.pushNamed(context, '/forgot-password');
-                          },
+                          onPressed: _goToForgotPassword,
                           child: const Text(
                             'Forgot Password?',
                             style: TextStyle(color: Colors.deepPurple),
                           ),
                         ),
                       ),
-
                       const SizedBox(height: 16),
 
-                      // Login Button
                       SizedBox(
                         width: double.infinity,
                         height: 48,
@@ -170,10 +184,8 @@ class _LoginPageState extends State<LoginPage> {
                                 ),
                         ),
                       ),
-
                       const SizedBox(height: 24),
 
-                      // Divider or Text
                       Row(
                         children: const [
                           Expanded(child: Divider()),
@@ -184,19 +196,14 @@ class _LoginPageState extends State<LoginPage> {
                           Expanded(child: Divider()),
                         ],
                       ),
-
                       const SizedBox(height: 24),
 
-                      // Sign Up Option
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           const Text("Don’t have an account? "),
                           InkWell(
-                            onTap: () {
-                              // TODO: Navigate to your Sign Up page
-                              // Navigator.pushNamed(context, '/signup');
-                            },
+                            onTap: _goToSignUp,
                             child: const Text(
                               "Sign Up",
                               style: TextStyle(
