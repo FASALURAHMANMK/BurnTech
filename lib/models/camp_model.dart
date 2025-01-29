@@ -4,12 +4,14 @@ class CampModel {
   final String description;
   final String location;
   final String? imageUrl;
+  final List<String>? members;
 
   CampModel({
     required this.id,
     required this.name,
     required this.description,
     required this.location,
-    this.imageUrl,
+    required this.imageUrl,
+    required this.members,
   });
 }
