@@ -96,7 +96,7 @@ class HomeTab extends StatelessWidget {
   Widget build(BuildContext context) {
     // Similar gradient style as the login screen
     return Container(
-      height: 600,
+      height: 800,
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           colors: [Color.fromRGBO(250, 139, 0, 1), Color.fromRGBO(248, 51, 60, 1)],

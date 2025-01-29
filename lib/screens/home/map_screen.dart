@@ -84,12 +84,13 @@ class _MapTabState extends State<MapTab> {
             ),
             markers: _markers,
             myLocationEnabled: true,    // Optional: show user location
-            myLocationButtonEnabled: true, // Optional: show "current location" button
+            myLocationButtonEnabled: true,
+             // Optional: show "current location" button
           ),
 
           // Search Bar Positioned at the top
           Positioned(
-            top: 40,
+            top: 20,
             left: 16,
             right: 16,
             child: Container(
