@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:burn_tech/models/camp_location.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -52,7 +54,63 @@ class _MapTabState extends State<MapTab> {
       _markers.add(marker);
     }
   }
+Future<void> _startNavigation() async {
+    if (_selectedMarkerPosition == null) return;
 
+    final lat = _selectedMarkerPosition!.latitude;
+    final lng = _selectedMarkerPosition!.longitude;
+
+    // Android: "google.navigation:q=lat,lng&mode=d"
+    final Uri googleMapsAndroidUri = Uri.parse('google.navigation:q=$lat,$lng&mode=d');
+    // iOS: "comgooglemaps://?daddr=lat,lng&directionsmode=driving"
+    final Uri googleMapsIOSUri = Uri.parse('comgooglemaps://?daddr=$lat,$lng&directionsmode=driving');
+    // Apple Maps fallback: "http://maps.apple.com/?daddr=lat,lng&dirflg=d"
+    final Uri appleMapsUri = Uri.parse('https://maps.apple.com/?daddr=$lat,$lng&dirflg=d');
+    // Web fallback
+    final Uri webUri = Uri.parse('https://www.google.com/maps/dir/?api=1&destination=$lat,$lng');
+
+    try {
+      if (Platform.isAndroid) {
+        if (await canLaunchUrl(googleMapsAndroidUri)) {
+          await launchUrl(googleMapsAndroidUri);
+        } else {
+          // fallback to web
+          if (await canLaunchUrl(webUri)) {
+            await launchUrl(webUri, mode: LaunchMode.externalApplication);
+          } else {
+            throw 'Could not launch navigation.';
+          }
+        }
+      } else if (Platform.isIOS) {
+        // If Google Maps installed
+        if (await canLaunchUrl(googleMapsIOSUri)) {
+          await launchUrl(googleMapsIOSUri);
+        } 
+        // fallback to Apple Maps
+        else if (await canLaunchUrl(appleMapsUri)) {
+          await launchUrl(appleMapsUri);
+        } 
+        // fallback to web
+        else if (await canLaunchUrl(webUri)) {
+          await launchUrl(webUri, mode: LaunchMode.externalApplication);
+        } else {
+          throw 'Could not launch navigation.';
+        }
+      } else {
+        // For web or other platforms, just open browser
+        if (await canLaunchUrl(webUri)) {
+          await launchUrl(webUri, mode: LaunchMode.externalApplication);
+        } else {
+          throw 'Could not launch navigation.';
+        }
+      }
+    } catch (e) {
+      debugPrint('Error launching navigation: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Navigation Error: $e')),
+      );
+    }
+  }
   void _onMapCreated(GoogleMapController controller) {
     _mapController = controller;
   }
@@ -113,17 +171,6 @@ Future<void> _drawRoute() async {
 }
 
   /// Open Google Maps App for turn-by-turn navigation
-  void _startNavigation() async {
-    if (_selectedMarkerPosition == null) return;
-
-    final Uri googleMapsUrl = Uri.parse(
-        "google.navigation:q=${_selectedMarkerPosition!.latitude},${_selectedMarkerPosition!.longitude}&mode=d");
-    if (await canLaunchUrl(googleMapsUrl)) {
-      await launchUrl(googleMapsUrl);
-    } else {
-      throw "Could not launch $googleMapsUrl";
-    }
-  }
 
   /// Search for a camp and move camera to it
   void _searchCamp(String query) {

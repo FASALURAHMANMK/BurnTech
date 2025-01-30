@@ -95,7 +95,7 @@ class _LoginScreenState extends State<LoginScreen> {
             child: SingleChildScrollView(
               child: Container(
                 margin: const EdgeInsets.symmetric(horizontal: 24),
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.9),
                   borderRadius: BorderRadius.circular(16),
@@ -112,7 +112,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           color: desertOrange,
                         ),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 28),
 
                       TextFormField(
                         controller: _emailController,
@@ -154,7 +154,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           return null;
                         },
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 10),
 
                       Align(
                         alignment: Alignment.centerRight,
