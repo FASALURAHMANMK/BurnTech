@@ -1,60 +1,46 @@
+import 'package:burn_tech/screens/auth/auth_provider.dart';
+import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:provider/provider.dart';
 import 'package:burn_tech/screens/auth/login_screen.dart';
 import 'package:burn_tech/screens/home/home_screen.dart';
-import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:burn_tech/models/color.dart';
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
-  runApp(const MyApp());
+
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthProvider()..checkUidInPrefs()),
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
-/// Root widget that decides which screen to load based on SharedPreferences
-class MyApp extends StatefulWidget {
+class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   @override
-  State<MyApp> createState() => _MyAppState();
-}
-
-class _MyAppState extends State<MyApp> {
-  bool _isLoading = true;
-  String? _storedUid;
-
-  @override
-  void initState() {
-    super.initState();
-    _checkUidInPrefs();
-  }
-
-  Future<void> _checkUidInPrefs() async {
-    final prefs = await SharedPreferences.getInstance();
-    _storedUid = prefs.getString('uid');
-    setState(() {
-      _isLoading = false;
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      // Show a loading indicator while checking SharedPreferences
-      return MaterialApp(
-        home: Scaffold(
-          body: Center(child: CircularProgressIndicator()),
-        ),
-      );
-    }
-
-    // If we have a stored UID, go to HomeScreen; otherwise, go to LoginScreen
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'BurnTech',
       theme: ThemeData(
-        primarySwatch:desertOrange,
+        primarySwatch: desertOrange, // Updated to valid swatch
       ),
-      home: _storedUid == null ? const LoginScreen() : const HomeScreen(),
+      home: Consumer<AuthProvider>(
+        builder: (context, authProvider, child) {
+          if (authProvider.isLoading) {
+            return const Scaffold(
+              body: Center(child: CircularProgressIndicator()),
+            );
+          }
+          return authProvider.isLoggedIn ? const HomeScreen() : const LoginScreen();
+        },
+      ),
     );
   }
 }

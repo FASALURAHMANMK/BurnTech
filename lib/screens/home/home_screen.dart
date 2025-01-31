@@ -1,183 +1,93 @@
-import 'package:burn_tech/models/camp_location.dart';
+import 'package:burn_tech/screens/auth/auth_provider.dart';
 import 'package:burn_tech/screens/auth/login_screen.dart';
-import 'package:burn_tech/screens/home/camps_screen.dart';
-import 'package:burn_tech/screens/home/chat_screen.dart';
-import 'package:burn_tech/screens/home/map_screen.dart';
-import 'package:burn_tech/screens/home/profile_screen.dart';
+import 'package:burn_tech/screens/camps/camps_screen.dart';
+import 'package:burn_tech/screens/chat/chat_screen.dart';
+import 'package:burn_tech/screens/home/home_screen_provider.dart';
+import 'package:burn_tech/screens/home/home_tab.dart';
+import 'package:burn_tech/screens/map/map_screen.dart';
+import 'package:burn_tech/screens/profile/profile_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
 import 'package:burn_tech/models/color.dart';
-class HomeScreen extends StatefulWidget {
+
+class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
-}
-
-class _HomeScreenState extends State<HomeScreen> {
-  int _currentIndex = 0;
-final camps = [
-  CampLocation(name: 'Camp A', latitude: 40.787, longitude: -119.203),
-  CampLocation(name: 'Camp B', latitude: 40.786, longitude: -119.208),
-  // Add more camps...
-];
-  // We define 5 tabs to match the bottom navbar
-  late final List<Widget> _pages = [
-    const HomeTab(),
-    MapTab(campLocations: camps),
-    const CampsTab(),
-    const ChatTab(),
-    ProfileTab(onLogout: _handleLogout),
-  ];
-
-  void _onTabTapped(int index) {
-    setState(() {
-      _currentIndex = index;
-    });
-  }
-
-  /// Clears the uid from SharedPreferences and navigates to LoginScreen
-  Future<void> _handleLogout() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('uid');
-    if (mounted) {
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (context) => const LoginScreen()),
-        (route) => false,
-      );
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      // Match gradient style in AppBar or a custom container
-      appBar: AppBar(
-        title: const Text('BurnTech',style: TextStyle(color: Colors.white,fontWeight: FontWeight.bold),),
-        backgroundColor: desertOrange,
-      ),
-      body: _pages[_currentIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: _onTabTapped,
-        selectedItemColor: desertOrange,
-        unselectedItemColor: Colors.grey,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_filled),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.map),
-            label: 'Map',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.group),
-            label: 'Camps',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.chat),
-            label: 'Chat',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Profile',
-          ),
-        ],
+    return ChangeNotifierProvider(
+      create: (_) => HomeProvider(),
+      child: Consumer<HomeProvider>(
+        builder: (context, homeProvider, child) {
+          return Scaffold(
+            appBar: AppBar(
+              title: const Text(
+                'BurnTech',
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              ),
+              backgroundColor: desertOrange,
+            ),
+            body: _buildBody(context, homeProvider),
+            bottomNavigationBar: _buildBottomNavBar(context, homeProvider),
+          );
+        },
       ),
     );
   }
-}
-class HomeTab extends StatelessWidget {
-  const HomeTab({super.key});
 
-  @override
-  Widget build(BuildContext context) {
-    // Similar gradient style as the login screen
-    return Container(
-      height: 800,
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color.fromRGBO(250, 139, 0, 1), Color.fromRGBO(248, 51, 60, 1)],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
+  Widget _buildBody(BuildContext context, HomeProvider homeProvider) {
+    final List<Widget> pages = [
+      const HomeTab(),
+      MapTab(campLocations: homeProvider.camps),
+      const CampsTab(),
+      const ChatTab(),
+      ProfileTab(onLogout: () async => await _handleLogout(context)),
+    ];
+
+    return pages[homeProvider.currentIndex];
+  }
+
+  Widget _buildBottomNavBar(BuildContext context, HomeProvider homeProvider) {
+    return BottomNavigationBar(
+      currentIndex: homeProvider.currentIndex,
+      onTap: homeProvider.onTabTapped,
+      selectedItemColor: desertOrange,
+      unselectedItemColor: Colors.grey,
+      items: const [
+        BottomNavigationBarItem(
+          icon: Icon(Icons.home_filled),
+          label: 'Home',
         ),
-      ),
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            // Example Section for "My Camps"
-            Card(
-              color: Colors.white.withOpacity(0.9),
-              child: ListTile(
-                leading: const Icon(Icons.cabin, color: desertOrange),
-                title: const Text(
-                  'My Camps',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                subtitle: const Text(
-                    'View camps you have tokens for or where you are a member.'),
-                onTap: () {
-                  // Navigate or show details
-                },
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // Upcoming Events
-            Card(
-              color: Colors.white.withOpacity(0.9),
-              child: ListTile(
-                leading: const Icon(Icons.event, color: desertOrange),
-                title: const Text(
-                  'Upcoming Events',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                subtitle: const Text('Check out upcoming camp events.'),
-                onTap: () {
-                  // Show a list of upcoming events
-                },
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // Nearby Camps
-            Card(
-              color: Colors.white.withOpacity(0.9),
-              child: ListTile(
-                leading: const Icon(Icons.location_on, color: desertOrange),
-                title: const Text(
-                  'Nearby Camps',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                subtitle: const Text('See camps near your current location.'),
-                onTap: () {
-                  // Show map or relevant info
-                },
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // Another placeholder
-            Card(
-              color: Colors.white.withOpacity(0.9),
-              child: ListTile(
-                leading: const Icon(Icons.campaign, color: desertOrange),
-                title: const Text(
-                  'Announcements',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                subtitle: const Text('Latest news and official announcements.'),
-                onTap: () {
-                  // Show announcements
-                },
-              ),
-            ),
-          ],
+        BottomNavigationBarItem(
+          icon: Icon(Icons.map),
+          label: 'Map',
         ),
-      ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.group),
+          label: 'Camps',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.chat),
+          label: 'Chat',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.person),
+          label: 'Profile',
+        ),
+      ],
     );
   }
+
+Future<void> _handleLogout(BuildContext context) async {
+  final authProvider = Provider.of<AuthProvider>(context, listen: false);
+  await authProvider.logoutUser(context);
+
+  if (context.mounted) {
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => const LoginScreen()),
+      (route) => false,
+    );
+  }
+}
 }

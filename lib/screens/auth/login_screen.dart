@@ -1,8 +1,9 @@
-import 'package:burn_tech/screens/home/home_screen.dart';
+import 'package:burn_tech/screens/auth/auth_provider.dart';
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
+import 'package:burn_tech/screens/home/home_screen.dart';
 import 'package:burn_tech/models/color.dart';
+
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -15,61 +16,38 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
-  bool _isLoading = false;
-  
-  Future<void> _loginUser(String email, String password) async {
-    setState(() => _isLoading = true);
-
-    try {
-      final UserCredential userCredential = await FirebaseAuth.instance
-          .signInWithEmailAndPassword(email: email, password: password);
-
-      final String uid = userCredential.user!.uid;
-
-      // Save the uid in SharedPreferences
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('uid', uid);
-
-      // Navigate to HomeScreen
-      if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
-        );
-      }
-    } on FirebaseAuthException catch (e) {
-      // Show error message
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Login Error: ${e.message}')),
-      );
-    } catch (e) {
-      // General error catch
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
-    } finally {
-      setState(() => _isLoading = false);
-    }
-  }
-
-  void _validateAndLogin() {
+  void _validateAndLogin(BuildContext context) async {
     if (_formKey.currentState!.validate()) {
-      _loginUser(
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      await authProvider.loginUser(
         _emailController.text.trim(),
         _passwordController.text.trim(),
       );
+
+      if (authProvider.errorMessage == null) {
+        // Navigate to Home Screen on successful login
+        if (mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const HomeScreen()),
+          );
+        }
+      } else {
+        // Show error message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(authProvider.errorMessage!)),
+        );
+      }
     }
   }
 
   void _goToSignUp() {
-    // TODO: Implement or navigate to a real SignUp screen
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('SignUp Screen not implemented')),
     );
   }
 
   void _goToForgotPassword() {
-    // TODO: Implement or navigate to a real Forgot Password screen
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Forgot Password Screen not implemented')),
     );
@@ -77,10 +55,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context);
+
     return Scaffold(
       body: Stack(
         children: [
-          // Background Gradient
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
@@ -90,7 +69,6 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ),
           ),
-
           Center(
             child: SingleChildScrollView(
               child: Container(
@@ -119,12 +97,12 @@ class _LoginScreenState extends State<LoginScreen> {
                         keyboardType: TextInputType.emailAddress,
                         decoration: const InputDecoration(
                           labelText: 'Email',
-                          labelStyle: TextStyle(color:desertOrange),
+                          labelStyle: TextStyle(color: desertOrange),
                           prefixIcon: Icon(Icons.email),
                           border: OutlineInputBorder(),
-                           focusedBorder: OutlineInputBorder(
-        borderSide: BorderSide(color: desertOrange, width: 2.0),
-      ),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: BorderSide(color: desertOrange, width: 2.0),
+                          ),
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
@@ -140,12 +118,12 @@ class _LoginScreenState extends State<LoginScreen> {
                         obscureText: true,
                         decoration: const InputDecoration(
                           labelText: 'Password',
-                          labelStyle: TextStyle(color:desertOrange),
+                          labelStyle: TextStyle(color: desertOrange),
                           prefixIcon: Icon(Icons.lock),
                           border: OutlineInputBorder(),
-                           focusedBorder: OutlineInputBorder(
-        borderSide: BorderSide(color: desertOrange, width: 2.0),
-      ),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: BorderSide(color: desertOrange, width: 2.0),
+                          ),
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
@@ -178,28 +156,14 @@ class _LoginScreenState extends State<LoginScreen> {
                               borderRadius: BorderRadius.circular(8),
                             ),
                           ),
-                          onPressed: _isLoading ? null : _validateAndLogin,
-                          child: _isLoading
-                              ? const CircularProgressIndicator(
-                                  color: Colors.white,
-                                )
+                          onPressed: authProvider.isLoading ? null : () => _validateAndLogin(context),
+                          child: authProvider.isLoading
+                              ? const CircularProgressIndicator(color: Colors.white)
                               : const Text(
                                   'LOGIN',
-                                  style: TextStyle(fontSize: 16,color: Colors.white),
+                                  style: TextStyle(fontSize: 16, color: Colors.white),
                                 ),
                         ),
-                      ),
-                      const SizedBox(height: 24),
-
-                      Row(
-                        children: const [
-                          Expanded(child: Divider()),
-                          Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 8),
-                            child: Text("OR"),
-                          ),
-                          Expanded(child: Divider()),
-                        ],
                       ),
                       const SizedBox(height: 24),
 
@@ -211,10 +175,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             onTap: _goToSignUp,
                             child: const Text(
                               "Sign Up",
-                              style: TextStyle(
-                                color: desertOrange,
-                                fontWeight: FontWeight.bold,
-                              ),
+                              style: TextStyle(color: desertOrange, fontWeight: FontWeight.bold),
                             ),
                           ),
                         ],
