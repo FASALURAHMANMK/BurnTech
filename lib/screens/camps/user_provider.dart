@@ -15,31 +15,37 @@ class UserProvider extends ChangeNotifier {
 
   /// Call this to fetch and cache user data
   Future<void> fetchUser(String uid) async {
-    _isLoading = true;
-    _error = null;
+  if (uid.isEmpty) {
+    _error = "User ID is empty";
     notifyListeners();
-
-    try {
-      final doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
-      if (!doc.exists) {
-        throw Exception("User does not exist");
-      }
-
-      final data = doc.data()!;
-      _user = UserModel(
-        uid: data['uid'],
-        name: data['name'],
-        email: data['email'],
-        profileImage: data['profileImage'],
-        favCamps: List<String>.from(data['favCamps'] ?? []),
-      );
-    } catch (e) {
-      _error = e.toString();
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
+    return;
   }
+
+  _isLoading = true;
+  _error = null;
+  notifyListeners();
+
+  try {
+    final doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+    if (!doc.exists) {
+      throw Exception("User does not exist");
+    }
+
+    final data = doc.data()!;
+    _user = UserModel(
+      uid: data['uid'],
+      name: data['name'],
+      email: data['email'],
+      profileImage: data['profileImage'],
+      favCamps: List<String>.from(data['favCamps'] ?? []),
+    );
+  } catch (e) {
+    _error = e.toString();
+  } finally {
+    _isLoading = false;
+    notifyListeners();
+  }
+}
 
   /// Toggle favorite camp in Firestore
   Future<void> toggleFavorite(CampModel camp) async {

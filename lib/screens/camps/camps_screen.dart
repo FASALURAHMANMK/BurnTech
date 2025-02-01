@@ -16,15 +16,22 @@ class CampScreen extends StatefulWidget {
 
 class _CampScreenState extends State<CampScreen> {
   @override
-  void initState() {
-    super.initState();
-    // Fetch user info and camp data
+@override
+void initState() {
+  super.initState();
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (widget.currentUserId.isEmpty) {
+      debugPrint("Error: currentUserId is empty!");
+      return;
+    }
+
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     userProvider.fetchUser(widget.currentUserId);
 
     final campProvider = Provider.of<CampProvider>(context, listen: false);
     campProvider.fetchCamps();
-  }
+  });
+}
 
   /// Helper: Return color for the ticket icon
   Color _getTicketColor(CampModel camp, UserProvider userProvider) {
@@ -62,7 +69,6 @@ class _CampScreenState extends State<CampScreen> {
 
     if (hasError) {
       return Scaffold(
-        appBar: AppBar(title: const Text("Camps")),
         body: Center(
           child: Text(
             userProvider.error ?? campProvider.error ?? "Unknown Error",
@@ -71,15 +77,11 @@ class _CampScreenState extends State<CampScreen> {
         ),
       );
     }
-
-    // If either is null, we don't have user or camp data
     if (userProvider.user == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text("Camps")),
         body: const Center(child: Text("No user data found.")),
       );
     }
-
     final currentUser = userProvider.user!;
     final camps = campProvider.camps;
 
@@ -91,9 +93,6 @@ class _CampScreenState extends State<CampScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Camps"),
-      ),
       body: ListView.builder(
         itemCount: camps.length,
         itemBuilder: (context, index) {
@@ -106,111 +105,124 @@ class _CampScreenState extends State<CampScreen> {
           final ticketColor = _getTicketColor(camp, userProvider);
 
           return Card(
-            margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-            child: ExpansionTile(
-              leading: CircleAvatar(
-                radius: 25,
-                backgroundImage: camp.imageUrl != null
-                    ? NetworkImage(camp.imageUrl!)
-                    : null,
-                child: camp.imageUrl == null
-                    ? const Icon(Icons.image_not_supported)
-                    : null,
-              ),
-              title: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // Camp name
-                  Expanded(
-                    child: Text(
-                      camp.name,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  // Map button
-                  IconButton(
-                    icon: const Icon(Icons.map),
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text("Map button clicked (placeholder)"),
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              ),
-              subtitle: Row(
-                children: [
-                  // Distances
-                  Row(
-                    children: [
-                      const Icon(Icons.directions_walk, size: 16),
-                      const SizedBox(width: 4),
-                      Text(walkingDistance),
-                    ],
-                  ),
-                  const SizedBox(width: 16),
-                  Row(
-                    children: [
-                      const Icon(Icons.directions_bike, size: 16),
-                      const SizedBox(width: 4),
-                      Text(cyclingDistance),
-                    ],
-                  ),
-                  const SizedBox(width: 16),
-                  Row(
-                    children: [
-                      const Icon(Icons.directions_car, size: 16),
-                      const SizedBox(width: 4),
-                      Text(drivingDistance),
-                    ],
-                  ),
-                  const SizedBox(width: 16),
-
-                  // Ticket status
-                  Icon(Icons.confirmation_num, color: ticketColor),
-                  const SizedBox(width: 8),
-
-                  // Favorite icon
-                  IconButton(
-                    icon: Icon(
-                      isFavorite ? Icons.favorite : Icons.favorite_border,
-                      color: isFavorite ? Colors.red : Colors.grey,
-                    ),
-                    onPressed: () {
-                      userProvider.toggleFavorite(camp);
-                    },
-                  ),
-                ],
-              ),
+  margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+  child: ExpansionTile(
+    leading: CircleAvatar(
+      radius: 25,
+      backgroundImage: camp.imageUrl != null
+          ? NetworkImage(camp.imageUrl!)
+          : null,
+      child: camp.imageUrl == null
+          ? const Icon(Icons.image_not_supported)
+          : null,
+    ),
+    // Show camp name in the title only
+    title: Text(
+      camp.name,
+      style: const TextStyle(fontWeight: FontWeight.bold),
+    ),
+    // Put distances in first line, and map/ticket/favorite in second line
+    subtitle: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // First line: Distances
+        Wrap(
+          spacing: 12,
+          runSpacing: 8,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            // Walking distance
+            Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Container(
-                  padding: const EdgeInsets.all(8.0),
-                  color: Colors.grey.shade100,
-                  width: double.infinity,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "Camp Description: ${camp.description}",
-                        style: const TextStyle(fontSize: 14),
-                      ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        "Events (Placeholder)",
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      // Placeholder
-                      const Text("• Event 1"),
-                      const Text("• Event 2"),
-                      const Text("• Event 3"),
-                    ],
-                  ),
-                )
+                const Icon(Icons.directions_walk, size: 16),
+                const SizedBox(width: 4),
+                Text(walkingDistance),
               ],
             ),
-          );
+            // Cycling distance
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.directions_bike, size: 16),
+                const SizedBox(width: 4),
+                Text(cyclingDistance),
+              ],
+            ),
+            // Driving distance
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.directions_car, size: 16),
+                const SizedBox(width: 4),
+                Text(drivingDistance),
+              ],
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 8),
+
+        // Second line: Map, Ticket icon, Favorite
+        Wrap(
+          spacing: 12,
+          runSpacing: 8,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            // Map button
+            IconButton(
+              icon: const Icon(Icons.map),
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text("Map button clicked (placeholder)"),
+                  ),
+                );
+              },
+            ),
+
+            // Ticket status
+            Icon(Icons.confirmation_num, color: ticketColor),
+
+            // Favorite icon
+            IconButton(
+              icon: Icon(
+                isFavorite ? Icons.favorite : Icons.favorite_border,
+                color: isFavorite ? Colors.red : Colors.grey,
+              ),
+              onPressed: () => userProvider.toggleFavorite(camp),
+            ),
+          ],
+        ),
+      ],
+    ),
+    children: [
+      // Expanded content (e.g. description & events placeholder)
+      Container(
+        padding: const EdgeInsets.all(8.0),
+        color: Colors.white,
+        width: double.infinity,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "Camp Description: ${camp.description}",
+              style: const TextStyle(fontSize: 14),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              "Events (Placeholder)",
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            const Text("• Event 1"),
+            const Text("• Event 2"),
+            const Text("• Event 3"),
+          ],
+        ),
+      )
+    ],
+  ),
+);
         },
       ),
     );

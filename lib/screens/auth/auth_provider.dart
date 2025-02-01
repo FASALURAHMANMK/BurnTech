@@ -7,7 +7,7 @@ class AuthProvider extends ChangeNotifier {
   bool _isLoading = true;
   bool _isLoggedIn = false;
   String? _errorMessage;
-    String? uid;
+  String? uid;
   bool get isLoading => _isLoading;
   bool get isLoggedIn => _isLoggedIn;
   String? get errorMessage => _errorMessage;
@@ -16,10 +16,6 @@ class AuthProvider extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     _isLoggedIn = prefs.getString('uid') != null;
     _isLoading = false;
-    notifyListeners();
-  }
- Future<void> loadUid() async {
-    final prefs = await SharedPreferences.getInstance();
     uid = prefs.getString('uid');
     notifyListeners();
   }
