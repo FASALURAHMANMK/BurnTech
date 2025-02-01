@@ -3,14 +3,14 @@ class UserModel {
   final String name;
   final String email;
   final String? profileImage;
-  final List<String>? campToken;
+  final List<String>? favCamps;
 
   UserModel({
     required this.uid,
     required this.name,
     required this.email,
-    this.profileImage,
-    this.campToken,
+    required this.profileImage,
+    required this.favCamps,
   });
 
   // Convert UserModel to Map
@@ -20,7 +20,7 @@ class UserModel {
       'name': name,
       'email': email,
       'profileImage': profileImage,
-      'campToken': campToken,
+      'favCamps': favCamps,
     };
   }
 
@@ -31,8 +31,8 @@ class UserModel {
       name: map['name'],
       email: map['email'],
       profileImage: map['profileImage'],
-      campToken: map['campToken'] != null
-          ? List<String>.from(map['campToken'])
+      favCamps: map['favCamps'] != null
+          ? List<String>.from(map['favCamps'])
           : null,
     );
   }

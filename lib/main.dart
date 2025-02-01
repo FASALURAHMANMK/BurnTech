@@ -1,4 +1,6 @@
 import 'package:burn_tech/screens/auth/auth_provider.dart';
+import 'package:burn_tech/screens/camps/camp_screen_provider.dart';
+import 'package:burn_tech/screens/camps/user_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
@@ -14,6 +16,8 @@ Future<void> main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()..checkUidInPrefs()),
+        ChangeNotifierProvider<UserProvider>(create: (_) => UserProvider()),
+        ChangeNotifierProvider<CampProvider>(create: (_) => CampProvider()),
       ],
       child: const MyApp(),
     ),

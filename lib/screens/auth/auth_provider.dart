@@ -7,11 +7,11 @@ class AuthProvider extends ChangeNotifier {
   bool _isLoading = true;
   bool _isLoggedIn = false;
   String? _errorMessage;
-
+  String? _uid;
   bool get isLoading => _isLoading;
   bool get isLoggedIn => _isLoggedIn;
   String? get errorMessage => _errorMessage;
-
+  String? get uid => _uid;
   Future<void> checkUidInPrefs() async {
     final prefs = await SharedPreferences.getInstance();
     _isLoggedIn = prefs.getString('uid') != null;
@@ -30,9 +30,9 @@ class AuthProvider extends ChangeNotifier {
         password: password,
       );
 
-      final String uid = userCredential.user!.uid;
+      _uid = userCredential.user!.uid;
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('uid', uid);
+      await prefs.setString('uid', _uid!);
       _isLoggedIn = true;
     } on FirebaseAuthException catch (e) {
       _errorMessage = e.message;
@@ -48,6 +48,7 @@ class AuthProvider extends ChangeNotifier {
     await _auth.signOut();
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('uid');
+    _uid = null;
     _isLoggedIn = false;
     notifyListeners();
   }
