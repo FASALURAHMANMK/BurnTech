@@ -35,7 +35,7 @@ class HomeScreen extends StatelessWidget {
       MapTab(camps: homeProvider.camps),
       CampScreen(currentUserId:authProvider.uid ?? ''),
       ArtScreen(currentUserId:authProvider.uid ?? ''),
-      ProfileTab(onLogout: () async => await _handleLogout(context)),
+      ProfileTab(onLogout: () async => await _handleLogout(context),userId: authProvider.uid??'',),
     ];
 
     return pages[homeProvider.currentIndex];
