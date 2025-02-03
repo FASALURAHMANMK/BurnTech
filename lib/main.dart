@@ -1,4 +1,7 @@
+import 'package:burn_tech/screens/arts/art_details_screen_provider.dart';
+import 'package:burn_tech/screens/arts/arts_screen_provider.dart';
 import 'package:burn_tech/screens/auth/auth_provider.dart';
+import 'package:burn_tech/screens/camps/camp_details_screen_provider.dart';
 import 'package:burn_tech/screens/camps/camp_screen_provider.dart';
 import 'package:burn_tech/screens/camps/user_provider.dart';
 import 'package:flutter/material.dart';
@@ -18,6 +21,9 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => AuthProvider()..checkUidInPrefs()),
         ChangeNotifierProvider<UserProvider>(create: (_) => UserProvider()),
         ChangeNotifierProvider<CampProvider>(create: (_) => CampProvider()),
+        ChangeNotifierProvider<ArtProvider>(create: (_) => ArtProvider()),
+        ChangeNotifierProvider<CampDetailProvider>(create: (_) => CampDetailProvider()),
+        ChangeNotifierProvider<ArtDetailProvider>(create: (_) => ArtDetailProvider()),
       ],
       child: const MyApp(),
     ),

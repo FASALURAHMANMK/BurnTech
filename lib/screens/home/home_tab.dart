@@ -6,7 +6,15 @@ class HomeTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return Scaffold(
+      appBar: AppBar(
+              title: const Text(
+                'BurnTech',
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold,fontSize: 28),
+              ),
+              backgroundColor: desertOrange,
+            ),
+    body:Container(
       height: 800,
       decoration: const BoxDecoration(
         gradient: LinearGradient(
@@ -46,6 +54,7 @@ class HomeTab extends StatelessWidget {
           ],
         ),
       ),
+    ),
     );
   }
 

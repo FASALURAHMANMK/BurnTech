@@ -1,27 +1,92 @@
+import 'package:burn_tech/models/camp_model.dart';
+import 'package:burn_tech/models/color.dart';
+import 'package:burn_tech/screens/camps/camp_details_screen.dart';
 import 'package:burn_tech/screens/map/map_screen_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:provider/provider.dart';
-import 'package:burn_tech/models/camp_location.dart';
 
-class MapTab extends StatelessWidget {
-  final List<CampLocation> campLocations;
+class MapTab extends StatefulWidget {
+  final List<CampModel> camps;
 
-  const MapTab({super.key, required this.campLocations});
+  const MapTab({Key? key, required this.camps}) : super(key: key);
+
+  @override
+  _MapTabState createState() => _MapTabState();
+}
+
+class _MapTabState extends State<MapTab> {
+  // Holds the screen offset for the custom info window.
+  Offset? _infoWindowOffset;
+
+  /// Updates the custom info window's position using the map controller.
+  Future<void> _updateInfoWindowOffset(MapProvider mapProvider) async {
+    if (mapProvider.mapController != null && mapProvider.selectedMarkerPosition != null) {
+      // Convert the selected marker's LatLng to screen coordinates.
+      final ScreenCoordinate screenCoordinate = await mapProvider.mapController!
+          .getScreenCoordinate(mapProvider.selectedMarkerPosition!);
+      final double pixelRatio = MediaQuery.of(context).devicePixelRatio;
+      setState(() {
+        _infoWindowOffset = Offset(
+          screenCoordinate.x.toDouble() / pixelRatio,
+          screenCoordinate.y.toDouble() / pixelRatio,
+        );
+      });
+    } else {
+      if (_infoWindowOffset != null) {
+        setState(() {
+          _infoWindowOffset = null;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (_) => MapProvider()
-        ..initMarkers(campLocations)
+        ..initMarkers(widget.camps)
         ..getCurrentLocation(),
       child: Consumer<MapProvider>(
         builder: (context, mapProvider, child) {
+          // Schedule updating or clearing the info window offset after the build phase.
+          if (mapProvider.isMarkerSelected) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              _updateInfoWindowOffset(mapProvider);
+            });
+          } else if (_infoWindowOffset != null) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) {
+                setState(() {
+                  _infoWindowOffset = null;
+                });
+              }
+            });
+          }
+
           return Scaffold(
+            appBar: AppBar(
+              title: const Text(
+                'Map',
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold,fontSize: 28),
+              ),
+              backgroundColor: desertOrange,
+            ),
             body: Stack(
               children: [
                 GoogleMap(
-                  onMapCreated: mapProvider.setMapController,
+                  onMapCreated: (controller) {
+                    mapProvider.setMapController(controller);
+                    if (mapProvider.isMarkerSelected) {
+                      _updateInfoWindowOffset(mapProvider);
+                    }
+                  },
+                  onCameraMove: (position) {
+                    // Update the info window position as the camera moves.
+                    if (mapProvider.isMarkerSelected) {
+                      _updateInfoWindowOffset(mapProvider);
+                    }
+                  },
                   initialCameraPosition: CameraPosition(
                     target: mapProvider.defaultCenter,
                     zoom: mapProvider.defaultZoom,
@@ -30,9 +95,26 @@ class MapTab extends StatelessWidget {
                   polylines: mapProvider.polylines,
                   myLocationEnabled: true,
                   myLocationButtonEnabled: true,
-                  onTap: (_) => mapProvider.clearSelectedMarker(),
+                  onTap: (_) {
+                    mapProvider.clearSelectedMarker();
+                    setState(() {
+                      _infoWindowOffset = null;
+                    });
+                  },
                 ),
                 _buildSearchBar(context, mapProvider),
+                // Custom Info Window overlay.
+                if (mapProvider.isMarkerSelected && _infoWindowOffset != null)
+                  Positioned(
+                    left: _infoWindowOffset!.dx + 50, // Adjust horizontal offset (half of 150 width)
+                    top: _infoWindowOffset!.dy + 100,  // Adjust vertical offset as needed
+                    child: CustomInfoWindow(
+                      title: mapProvider.selectedMarkerTitle ?? '',
+                      id: mapProvider.selectedMarkerId??'',
+                      isCamp: true,
+                    ),
+                  ),
+                // Directions button overlay.
                 if (mapProvider.isMarkerSelected)
                   Positioned(
                     bottom: 20,
@@ -43,7 +125,7 @@ class MapTab extends StatelessWidget {
                       child: Container(
                         width: 60,
                         height: 60,
-                        decoration: BoxDecoration(
+                        decoration: const BoxDecoration(
                           color: Colors.blue,
                           shape: BoxShape.circle,
                         ),
@@ -52,12 +134,11 @@ class MapTab extends StatelessWidget {
                             await mapProvider.drawRoute();
                             mapProvider.startNavigation();
                           },
-                          icon:
-                              const Icon(Icons.directions, color: Colors.white),
+                          icon: const Icon(Icons.directions, color: Colors.white),
                         ),
                       ),
                     ),
-                  )
+                  ),
               ],
             ),
           );
@@ -84,7 +165,7 @@ class MapTab extends StatelessWidget {
               child: TextField(
                 controller: searchController,
                 decoration: const InputDecoration(
-                  hintText: 'Search camp...',
+                  hintText: 'Search camps & Arts...',
                   border: InputBorder.none,
                 ),
                 onSubmitted: (value) {
@@ -104,6 +185,68 @@ class MapTab extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// A simple custom info window widget.
+class CustomInfoWindow extends StatelessWidget {
+  final String title;
+  final String id;
+  final bool isCamp;
+  const CustomInfoWindow({Key? key, required this.title,required this.id,required this.isCamp}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      // Use a transparent material so that any shadows show up properly.
+      color: Colors.transparent,
+      child: Container(
+        width: 150,
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: const [
+            BoxShadow(
+              color: Colors.black26,
+              offset: Offset(0, 2),
+              blurRadius: 6,
+            ),
+          ],
+        ),
+        child: GestureDetector(
+          onTap: () {
+            isCamp?
+             Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => CampDetailsScreen(campId:id),
+                      ),
+                    ):
+                     Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => CampDetailsScreen(campId:id),
+                      ),
+                    );
+          },
+         child:Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              "Tap for details",
+              style: TextStyle(fontSize: 12),
+            ),
+          ],
+        ),
+      ),
       ),
     );
   }

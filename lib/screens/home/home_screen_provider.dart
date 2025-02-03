@@ -1,19 +1,35 @@
+import 'package:burn_tech/models/camp_model.dart';
+import 'package:burn_tech/screens/camps/camp_screen_service.dart';
 import 'package:flutter/material.dart';
-import 'package:burn_tech/models/camp_location.dart';
-
 class HomeProvider extends ChangeNotifier {
+  final DataProvider _dataProvider = DataProvider();
+  
   int _currentIndex = 0;
+  List<CampModel> _camps = [];
 
-  final List<CampLocation> _camps = [
-    CampLocation(name: 'Camp A', latitude: 40.787, longitude: -119.203),
-    CampLocation(name: 'Camp B', latitude: 40.786, longitude: -119.208),
-  ];
-
+  HomeProvider() {
+    // Call loadCamps() on initialization.
+    loadCamps();
+  }
+  
   int get currentIndex => _currentIndex;
-  List<CampLocation> get camps => _camps;
+
+  /// Expose the camps to widgets
+  List<CampModel> get camps => _camps;
 
   void onTabTapped(int index) {
     _currentIndex = index;
     notifyListeners();
   }
+
+  Future<void> loadCamps() async {
+  try {
+    // Assume fetchCamps() now returns a List<CampModel>
+    final List<CampModel> fetchedCamps = await _dataProvider.fetchCamps(); 
+    _camps = fetchedCamps;
+    notifyListeners();
+  } catch (e) {
+    rethrow;
+  }
+}
 }

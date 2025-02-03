@@ -1,7 +1,7 @@
 import 'package:burn_tech/screens/auth/auth_provider.dart';
 import 'package:burn_tech/screens/auth/login_screen.dart';
 import 'package:burn_tech/screens/camps/camps_screen.dart';
-import 'package:burn_tech/screens/chat/chat_screen.dart';
+import 'package:burn_tech/screens/arts/arts_screen.dart';
 import 'package:burn_tech/screens/home/home_screen_provider.dart';
 import 'package:burn_tech/screens/home/home_tab.dart';
 import 'package:burn_tech/screens/map/map_screen.dart';
@@ -19,14 +19,7 @@ class HomeScreen extends StatelessWidget {
       create: (_) => HomeProvider(),
       child: Consumer<HomeProvider>(
         builder: (context, homeProvider, child) {
-          return Scaffold(
-            appBar: AppBar(
-              title: const Text(
-                'BurnTech',
-                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-              ),
-              backgroundColor: desertOrange,
-            ),
+          return Scaffold(   
             body: _buildBody(context, homeProvider),
             bottomNavigationBar: _buildBottomNavBar(context, homeProvider),
           );
@@ -39,9 +32,9 @@ class HomeScreen extends StatelessWidget {
     final authProvider = Provider.of<AuthProvider>(context);
     final List<Widget> pages = [
       const HomeTab(),
-      MapTab(campLocations: homeProvider.camps),
+      MapTab(camps: homeProvider.camps),
       CampScreen(currentUserId:authProvider.uid ?? ''),
-      const ChatTab(),
+      ArtScreen(currentUserId:authProvider.uid ?? ''),
       ProfileTab(onLogout: () async => await _handleLogout(context)),
     ];
 
@@ -64,12 +57,12 @@ class HomeScreen extends StatelessWidget {
           label: 'Map',
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.group),
+          icon: Icon(Icons.cabin),
           label: 'Camps',
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.chat),
-          label: 'Chat',
+          icon: Icon(Icons.design_services),
+          label: 'Arts',
         ),
         BottomNavigationBarItem(
           icon: Icon(Icons.person),
