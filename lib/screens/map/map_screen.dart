@@ -1,6 +1,7 @@
 import 'package:burn_tech/models/camp_model.dart';
 import 'package:burn_tech/models/color.dart';
 import 'package:burn_tech/screens/camps/camp_details_screen.dart';
+import 'package:burn_tech/screens/chat/chat_screen.dart';
 import 'package:burn_tech/screens/map/map_screen_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -71,6 +72,21 @@ class _MapTabState extends State<MapTab> {
                 style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold,fontSize: 28),
               ),
               backgroundColor: desertOrange,
+              actions: [
+  IconButton(
+    onPressed: () {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => ChatScreen()),
+      );
+    },
+    icon: Image.asset(
+      'assets/chat.png',
+      width: 24, // Set appropriate width
+      height: 24, // Set appropriate height
+    ),
+  ),
+],
             ),
             body: Stack(
               children: [
@@ -154,10 +170,10 @@ class _MapTabState extends State<MapTab> {
       left: 16,
       right: 16,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16),
         decoration: BoxDecoration(
           color: Colors.white.withOpacity(0.9),
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(18),
         ),
         child: Row(
           children: [

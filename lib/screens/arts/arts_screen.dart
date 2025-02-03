@@ -3,6 +3,7 @@ import 'package:burn_tech/models/color.dart';
 import 'package:burn_tech/screens/arts/art_details_screen.dart';
 import 'package:burn_tech/screens/arts/arts_screen_provider.dart';
 import 'package:burn_tech/screens/camps/user_provider.dart';
+import 'package:burn_tech/screens/chat/chat_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:burn_tech/models/art_model.dart';
@@ -100,6 +101,21 @@ class _ArtScreenState extends State<ArtScreen> {
             style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 28),
           ),
           backgroundColor: desertOrange,
+          actions: [
+  IconButton(
+    onPressed: () {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => ChatScreen()),
+      );
+    },
+    icon: Image.asset(
+      'assets/chat.png',
+      width: 24, // Set appropriate width
+      height: 24, // Set appropriate height
+    ),
+  ),
+],
         ),
         body: Container(
           decoration: BoxDecoration(
@@ -129,6 +145,21 @@ class _ArtScreenState extends State<ArtScreen> {
                 style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold,fontSize: 28),
               ),
               backgroundColor: desertOrange,
+              actions: [
+  IconButton(
+    onPressed: () {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => ChatScreen()),
+      );
+    },
+    icon: Image.asset(
+      'assets/chat.png',
+      width: 24, // Set appropriate width
+      height: 24, // Set appropriate height
+    ),
+  ),
+],
             ),
       body: Container(
         decoration: const BoxDecoration(
@@ -180,6 +211,9 @@ class _ArtScreenState extends State<ArtScreen> {
             }
 
             return Card(
+              shape: RoundedRectangleBorder(
+    borderRadius: BorderRadius.circular(18), // Change 20.0 to your desired radius
+  ),
               margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
               child: ListTile(
                 contentPadding: const EdgeInsets.all(8),
@@ -286,11 +320,11 @@ class _ArtScreenState extends State<ArtScreen> {
   }
   Widget _buildSearchBar(ArtProvider artProvider) {
     return Container(
-      margin: const EdgeInsets.all(8),
+      margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.9),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(18),
       ),
       child: Row(
         children: [
@@ -298,7 +332,7 @@ class _ArtScreenState extends State<ArtScreen> {
             child: TextField(
               controller: _searchController,
               decoration: const InputDecoration(
-                hintText: 'Search camps...',
+                hintText: 'Search Arts...',
                 border: InputBorder.none,
               ),
               onChanged: (value) {

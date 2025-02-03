@@ -290,6 +290,9 @@ class _EventCard extends StatelessWidget {
         : 'No Occurrences Listed';
 
     return Card(
+      shape: RoundedRectangleBorder(
+    borderRadius: BorderRadius.circular(18), // Change 20.0 to your desired radius
+  ),
       margin: const EdgeInsets.symmetric(vertical: 8),
       child: ListTile(
         title: Text(

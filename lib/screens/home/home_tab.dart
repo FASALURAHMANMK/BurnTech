@@ -1,3 +1,4 @@
+import 'package:burn_tech/screens/chat/chat_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:burn_tech/models/color.dart';
 
@@ -13,6 +14,22 @@ class HomeTab extends StatelessWidget {
                 style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold,fontSize: 28),
               ),
               backgroundColor: desertOrange,
+             actions: [
+  IconButton(
+    onPressed: () {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => ChatScreen()),
+      );
+    },
+    icon: Image.asset(
+      'assets/chat.png',
+      width: 24, // Set appropriate width
+      height: 24, // Set appropriate height
+    ),
+  ),
+],
+              
             ),
     body:Container(
       height: 800,

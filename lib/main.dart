@@ -4,6 +4,7 @@ import 'package:burn_tech/screens/auth/auth_provider.dart';
 import 'package:burn_tech/screens/camps/camp_details_screen_provider.dart';
 import 'package:burn_tech/screens/camps/camp_screen_provider.dart';
 import 'package:burn_tech/screens/camps/user_provider.dart';
+import 'package:burn_tech/screens/chat/chat_screen_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
@@ -24,6 +25,7 @@ Future<void> main() async {
         ChangeNotifierProvider<ArtProvider>(create: (_) => ArtProvider()),
         ChangeNotifierProvider<CampDetailProvider>(create: (_) => CampDetailProvider()),
         ChangeNotifierProvider<ArtDetailProvider>(create: (_) => ArtDetailProvider()),
+        ChangeNotifierProvider<ChatProvider>(create: (_) => ChatProvider()),
       ],
       child: const MyApp(),
     ),

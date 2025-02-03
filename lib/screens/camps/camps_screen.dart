@@ -1,5 +1,6 @@
 import 'package:burn_tech/screens/camps/camp_details_screen.dart';
 import 'package:burn_tech/screens/camps/camp_screen_provider.dart';
+import 'package:burn_tech/screens/chat/chat_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:burn_tech/screens/camps/user_provider.dart';
@@ -106,6 +107,21 @@ class _CampScreenState extends State<CampScreen> {
             style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 28),
           ),
           backgroundColor: desertOrange,
+          actions: [
+  IconButton(
+    onPressed: () {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => ChatScreen()),
+      );
+    },
+    icon: Image.asset(
+      'assets/chat.png',
+      width: 24, // Set appropriate width
+      height: 24, // Set appropriate height
+    ),
+  ),
+],
         ),
         body: Container(
           decoration: BoxDecoration(
@@ -135,6 +151,21 @@ class _CampScreenState extends State<CampScreen> {
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 28),
         ),
         backgroundColor: desertOrange,
+        actions: [
+  IconButton(
+    onPressed: () {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => ChatScreen()),
+      );
+    },
+    icon: Image.asset(
+      'assets/chat.png',
+      width: 24, // Set appropriate width
+      height: 24, // Set appropriate height
+    ),
+  ),
+],
       ),
       body: Container(
         decoration: BoxDecoration(
@@ -168,6 +199,9 @@ class _CampScreenState extends State<CampScreen> {
                   final drivingDistance = _getDrivingDistance(camp);
 
                   return Card(
+                    shape: RoundedRectangleBorder(
+    borderRadius: BorderRadius.circular(18), // Change 20.0 to your desired radius
+  ),
                     margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                     child: ListTile(
                       title: Text(
@@ -276,11 +310,11 @@ class _CampScreenState extends State<CampScreen> {
   /// Updated search bar widget using a simple Container rather than Positioned.
   Widget _buildSearchBar(CampProvider campProvider) {
     return Container(
-      margin: const EdgeInsets.all(8),
+      margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.9),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(18),
       ),
       child: Row(
         children: [
