@@ -1,46 +1,39 @@
-// mbtiles_provider.dart
-import 'dart:io';
+  import 'dart:io';
 
-import 'package:flutter/foundation.dart';
-import 'package:http/http.dart' as http;
-import 'package:path/path.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:sqflite/sqflite.dart';
+  import 'package:flutter/foundation.dart';
+  import 'package:http/http.dart' as http;
+  import 'package:path/path.dart';
+  import 'package:path_provider/path_provider.dart';
+  import 'package:sqflite/sqflite.dart';
 
-class MBTilesProvider with ChangeNotifier {
-  Database? _database;
-
-  /// Returns the MBTiles database. If it isn’t available locally yet, it will be downloaded.
-  Future<Database> get database async {
-    if (_database != null) return _database!;
-    _database = await _initMBTiles();
-    return _database!;
-  }
-
-  Future<Database> _initMBTiles() async {
-    // Get a local path to store the file.
-    Directory documentsDir = await getApplicationDocumentsDirectory();
-    String dbPath = join(documentsDir.path, 'BRC24_Vector.mbtiles');
-
-    // If the file doesn’t exist, download it.
-    if (!await File(dbPath).exists()) {
-      await _downloadMBTiles(dbPath);
+  class MBTilesProvider with ChangeNotifier {
+    Database? _database;
+    Future<Database> get database async {
+      if (_database != null) return _database!;
+      _database = await _initMBTiles();
+      return _database!;
     }
 
-    // Open the MBTiles database in read-only mode.
-    Database db = await openDatabase(dbPath, readOnly: true);
-    return db;
-  }
+    Future<Database> _initMBTiles() async {
+      Directory documentsDir = await getApplicationDocumentsDirectory();
+      String dbPath = join(documentsDir.path, 'BRC24_Vector.mbtiles');
+      if (!await File(dbPath).exists()) {
+        await _downloadMBTiles(dbPath);
+      }
 
-  Future<void> _downloadMBTiles(String dbPath) async {
-    const url =
-        'https://bm-innovate.s3.amazonaws.com/2024/GIS/MBTiles/BRC24_Vector.mbtiles';
-    final response = await http.get(Uri.parse(url));
-    if (response.statusCode == 200) {
-      File file = File(dbPath);
-      await file.writeAsBytes(response.bodyBytes);
-    } else {
-      throw Exception('Failed to download MBTiles file');
+      Database db = await openDatabase(dbPath, readOnly: true);
+      return db;
+    }
+
+    Future<void> _downloadMBTiles(String dbPath) async {
+      const url =
+          'https://bm-innovate.s3.amazonaws.com/2024/GIS/MBTiles/BRC24_Vector.mbtiles';
+      final response = await http.get(Uri.parse(url));
+      if (response.statusCode == 200) {
+        File file = File(dbPath);
+        await file.writeAsBytes(response.bodyBytes);
+      } else {
+        throw Exception('Failed to download MBTiles file');
+      }
     }
   }
-}
