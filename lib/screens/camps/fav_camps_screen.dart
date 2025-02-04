@@ -1,136 +1,180 @@
-import 'package:burn_tech/models/user_model.dart';
-import 'package:burn_tech/screens/camps/camp_card.dart';
-import 'package:burn_tech/screens/camps/camp_details_screen.dart';
-import 'package:burn_tech/screens/camps/fav_camp_screen_provider.dart';
-import 'package:burn_tech/screens/chat/chat_screen.dart';
-import 'package:burn_tech/screens/map/map_screen.dart';
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:burn_tech/screens/camps/user_provider.dart';
-import 'package:burn_tech/models/color.dart';
+  import 'package:burn_tech/models/user_model.dart';
+  import 'package:burn_tech/screens/camps/camp_card.dart';
+  import 'package:burn_tech/screens/camps/camp_details_screen.dart';
+  import 'package:burn_tech/screens/camps/fav_camp_screen_provider.dart';
+  import 'package:burn_tech/screens/chat/chat_screen.dart';
+  import 'package:burn_tech/screens/map/map_screen.dart';
+  import 'package:flutter/material.dart';
+  import 'package:provider/provider.dart';
+  import 'package:burn_tech/screens/camps/user_provider.dart';
+  import 'package:burn_tech/models/color.dart';
 
-class favCampScreen extends StatefulWidget {
-  final String currentUserId;
+  class favCampScreen extends StatefulWidget {
+    final String currentUserId;
 
-  const favCampScreen({
-    Key? key,
-    required this.currentUserId,
-  }) : super(key: key);
+    const favCampScreen({
+      Key? key,
+      required this.currentUserId,
+    }) : super(key: key);
 
-  @override
-  State<favCampScreen> createState() => _favCampScreenState();
-}
-
-class _favCampScreenState extends State<favCampScreen> {
-  late TextEditingController _searchController;
-  late favCampProvider favcampProvider;
-  late UserModel currentUser;
-  bool _dataInitialized = false; // To ensure initialization only happens once
-
-  @override
-  void initState() {
-    super.initState();
-    _searchController = TextEditingController();
-
-    // Delay fetching user data until after the first frame is rendered.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (widget.currentUserId.isEmpty) {
-        debugPrint("Error: currentUserId is empty!");
-      } else {
-        final userProvider = Provider.of<UserProvider>(context, listen: false);
-        userProvider.fetchUser(widget.currentUserId);
-      }
-    });
+    @override
+    State<favCampScreen> createState() => _favCampScreenState();
   }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // Initialize the favcampProvider and fetch camp data only once when dependencies change.
-    if (!_dataInitialized) {
-      favcampProvider = Provider.of<favCampProvider>(context, listen: false);
-      final userProvider = Provider.of<UserProvider>(context);
-      if (userProvider.user != null) {
-        currentUser = userProvider.user!;
-        // Schedule the initialization after the current frame.
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          _initializeData();
-        });
-        _dataInitialized = true;
+  class _favCampScreenState extends State<favCampScreen> {
+    late TextEditingController _searchController;
+    late favCampProvider favcampProvider;
+    late UserModel currentUser;
+    bool _dataInitialized = false; // To ensure initialization only happens once
+
+    @override
+    void initState() {
+      super.initState();
+      _searchController = TextEditingController();
+
+      // Delay fetching user data until after the first frame is rendered.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (widget.currentUserId.isEmpty) {
+          debugPrint("Error: currentUserId is empty!");
+        } else {
+          final userProvider = Provider.of<UserProvider>(context, listen: false);
+          userProvider.fetchUser(widget.currentUserId);
+        }
+      });
+    }
+
+    @override
+    void didChangeDependencies() {
+      super.didChangeDependencies();
+      // Initialize the favcampProvider and fetch camp data only once when dependencies change.
+      if (!_dataInitialized) {
+        favcampProvider = Provider.of<favCampProvider>(context, listen: false);
+        final userProvider = Provider.of<UserProvider>(context);
+        if (userProvider.user != null) {
+          currentUser = userProvider.user!;
+          // Schedule the initialization after the current frame.
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _initializeData();
+          });
+          _dataInitialized = true;
+        }
       }
     }
-  }
 
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
+    @override
+    void dispose() {
+      _searchController.dispose();
+      super.dispose();
+    }
 
-  /// First fetch the camps, then update the favorite camps based on the current user.
-  Future<void> _initializeData() async {
-    await favcampProvider.fetchCamps();
-    favcampProvider.updateFavoriteCamps(currentUser);
-  }
+    /// First fetch the camps, then update the favorite camps based on the current user.
+    Future<void> _initializeData() async {
+      await favcampProvider.fetchCamps();
+      favcampProvider.updateFavoriteCamps(currentUser);
+    }
 
-  @override
-  Widget build(BuildContext context) {
-    final userProvider = Provider.of<UserProvider>(context);
-    final favcampProvider = Provider.of<favCampProvider>(context);
+    @override
+    Widget build(BuildContext context) {
+      final userProvider = Provider.of<UserProvider>(context);
+      final favcampProvider = Provider.of<favCampProvider>(context);
 
-    final isLoading = userProvider.isLoading || favcampProvider.isLoading;
-    final hasError = userProvider.error != null || favcampProvider.error != null;
+      final isLoading = userProvider.isLoading || favcampProvider.isLoading;
+      final hasError =
+          userProvider.error != null || favcampProvider.error != null;
 
-    if (isLoading) {
-      return Scaffold(
-        body: Container(
-          height: double.infinity,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                const Color.fromRGBO(250, 139, 0, 1),
-                const Color.fromRGBO(248, 51, 60, 1)
-              ],
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
+      if (isLoading) {
+        return Scaffold(
+          body: Container(
+            height: double.infinity,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  const Color.fromRGBO(250, 139, 0, 1),
+                  const Color.fromRGBO(248, 51, 60, 1)
+                ],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+            ),
+            child: const Center(
+                child: CircularProgressIndicator(color: Colors.white)),
+          ),
+        );
+      }
+
+      if (hasError) {
+        return Scaffold(
+          body: Center(
+            child: Text(
+              userProvider.error ?? favcampProvider.error ?? "Unknown Error",
+              style: const TextStyle(color: Colors.red),
             ),
           ),
-          child: const Center(
-              child: CircularProgressIndicator(color: Colors.white)),
-        ),
-      );
-    }
+        );
+      }
 
-    if (hasError) {
-      return Scaffold(
-        body: Center(
-          child: Text(
-            userProvider.error ?? favcampProvider.error ?? "Unknown Error",
-            style: const TextStyle(color: Colors.red),
+      if (userProvider.user == null) {
+        return const Scaffold(
+          body: Center(child: Text("No user data found.")),
+        );
+      }
+
+      // Use the user data from the provider.
+      final currentUser = userProvider.user!;
+      final camps = favcampProvider.filteredCamps;
+
+      if (camps.isEmpty) {
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text(
+              'Favourite Camps',
+              style: TextStyle(
+                  color: Colors.white, fontWeight: FontWeight.bold, fontSize: 28),
+            ),
+            backgroundColor: desertOrange,
+            actions: [
+              IconButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => ChatScreen()),
+                  );
+                },
+                icon: Image.asset(
+                  'assets/chat.png',
+                  width: 24,
+                  height: 24,
+                ),
+              ),
+            ],
           ),
-        ),
-      );
-    }
+          body: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  const Color.fromRGBO(250, 139, 0, 1),
+                  const Color.fromRGBO(248, 51, 60, 1)
+                ],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+            ),
+            child: Column(
+              children: [
+                _buildSearchBar(favcampProvider),
+                const Expanded(child: Center(child: Text("No camps found."))),
+              ],
+            ),
+          ),
+        );
+      }
 
-    if (userProvider.user == null) {
-      return const Scaffold(
-        body: Center(child: Text("No user data found.")),
-      );
-    }
-
-    // Use the user data from the provider.
-    final currentUser = userProvider.user!;
-    final camps = favcampProvider.filteredCamps;
-
-    if (camps.isEmpty) {
       return Scaffold(
         appBar: AppBar(
           title: const Text(
             'Favourite Camps',
             style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 28),
+                color: Colors.white, fontWeight: FontWeight.bold, fontSize: 28),
           ),
           backgroundColor: desertOrange,
           actions: [
@@ -163,127 +207,77 @@ class _favCampScreenState extends State<favCampScreen> {
           child: Column(
             children: [
               _buildSearchBar(favcampProvider),
-              const Expanded(
-                  child: Center(child: Text("No camps found."))),
+              Expanded(
+                child: ListView.builder(
+                  itemCount: camps.length,
+                  itemBuilder: (context, index) {
+                    final camp = camps[index];
+                    return CampCard(
+                      camp: camp,
+                      currentUser: currentUser,
+                      onMapPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => MapTab(arts: [], camps: [camp]),
+                          ),
+                        );
+                      },
+                      onFavoritePressed: () => userProvider.toggleFavorite(camp),
+                      onTapDetails: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                CampDetailsScreen(campId: camp.uid ?? ''),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
             ],
           ),
         ),
       );
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Favourite Camps',
-          style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 28),
-        ),
-        backgroundColor: desertOrange,
-        actions: [
-          IconButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => ChatScreen()),
-              );
-            },
-            icon: Image.asset(
-              'assets/chat.png',
-              width: 24,
-              height: 24,
-            ),
-          ),
-        ],
-      ),
-      body: Container(
+    Widget _buildSearchBar(favCampProvider favcampProvider) {
+      return Container(
+        margin: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              const Color.fromRGBO(250, 139, 0, 1),
-              const Color.fromRGBO(248, 51, 60, 1)
-            ],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
+          color: Colors.white.withOpacity(0.9),
+          borderRadius: BorderRadius.circular(18),
         ),
-        child: Column(
+        child: Row(
           children: [
-            _buildSearchBar(favcampProvider),
             Expanded(
-              child: ListView.builder(
-                itemCount: camps.length,
-                itemBuilder: (context, index) {
-                  final camp = camps[index];
-                  return CampCard(
-                    camp: camp,
-                    currentUser: currentUser,
-                    onMapPressed: () {
-                      Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => MapTab(arts: [],camps: [camp]),
+              child: TextField(
+                controller: _searchController,
+                decoration: const InputDecoration(
+                  hintText: 'Search camps...',
+                  border: InputBorder.none,
                 ),
-              );
-                    },
-                    onFavoritePressed: () =>
-                        userProvider.toggleFavorite(camp),
-                    onTapDetails: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => CampDetailsScreen(
-                              campId: camp.uid ?? ''),
-                        ),
-                      );
-                    },
-                  );
+                onChanged: (value) {
+                  if (value.trim().isEmpty) {
+                    favcampProvider.searchCamps("");
+                  } else {
+                    favcampProvider.searchCamps(value);
+                  }
                 },
               ),
             ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSearchBar(favCampProvider favcampProvider) {
-    return Container(
-      margin: const EdgeInsets.all(16),
-      padding:
-          const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.9),
-        borderRadius: BorderRadius.circular(18),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextField(
-              controller: _searchController,
-              decoration: const InputDecoration(
-                hintText: 'Search camps...',
-                border: InputBorder.none,
-              ),
-              onChanged: (value) {
-                if (value.trim().isEmpty) {
-                  favcampProvider.searchCamps("");
-                } else {
-                  favcampProvider.searchCamps(value);
-                }
+            IconButton(
+              icon: const Icon(Icons.search),
+              onPressed: () {
+                final value = _searchController.text;
+                favcampProvider.searchCamps(value);
               },
             ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () {
-              final value = _searchController.text;
-              favcampProvider.searchCamps(value);
-            },
-          ),
-        ],
-      ),
-    );
+          ],
+        ),
+      );
+    }
   }
-}
