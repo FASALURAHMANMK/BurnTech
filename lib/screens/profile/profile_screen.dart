@@ -1,8 +1,13 @@
+import 'package:burn_tech/models/color.dart';
+import 'package:burn_tech/screens/arts/fav_art_screen.dart';
+import 'package:burn_tech/screens/camps/fav_camps_screen.dart';
 import 'package:burn_tech/screens/camps/user_provider.dart';
+import 'package:burn_tech/screens/chat/chat_screen.dart';
+import 'package:burn_tech/screens/map/offline_map_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-class ProfileTab extends StatefulWidget {
+class ProfileTab extends StatelessWidget {
   final String userId;
   final Future<void> Function() onLogout;
 
@@ -10,74 +15,149 @@ class ProfileTab extends StatefulWidget {
       : super(key: key);
 
   @override
-  _ProfileTabState createState() => _ProfileTabState();
-}
-
-class _ProfileTabState extends State<ProfileTab> {
-  late Future<void> _fetchUserFuture;
-
-  @override
-  void initState() {
-    super.initState();
-    // Schedule fetchUser() only once.
-    _fetchUserFuture = Provider.of<UserProvider>(context, listen: false)
-        .fetchUser(widget.userId);
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return FutureBuilder(
-      future: _fetchUserFuture,
-      builder: (context, snapshot) {
-        // You can check for snapshot states (loading, error) here if needed.
-        return Consumer<UserProvider>(
-          builder: (context, userProvider, child) {
-            if (userProvider.isLoading) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            
-            final user = userProvider.user;
-            if (user == null) {
-              return const Center(child: Text("Failed to load user data"));
-            }
-            
-            return Scaffold(
-              appBar: AppBar(title: const Text("Profile")),
-              body: Column(
-                children: [
-                  const SizedBox(height: 20),
-                  Center(
-                    child: CircleAvatar(
-                      radius: 50,
-                      backgroundImage: user.profileImage != null
-                          ? NetworkImage(user.profileImage!)
-                          : null,
-                      child: user.profileImage == null
-                          ? const Icon(Icons.person, size: 50)
-                          : null,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(user.name,
-                      style: const TextStyle(
-                          fontSize: 20, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 20),
-                  Expanded(
-                    child: ListView(
-                      children: [
-                        _buildListItem(Icons.receipt, "My Tickets"),
-                        _buildListItem(Icons.favorite, "Favourite Camps"),
-                        _buildListItem(Icons.brush, "Favourite Arts"),
-                        _buildListItem(Icons.map, "Offline Maps"),
-                        _buildListItem(Icons.logout, "Logout",
-                            onTap: () => _showLogoutDialog(context)),
-                      ],
-                    ),
-                  ),
-                ],
+    // Schedule the fetch after the first frame is rendered.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<UserProvider>(context, listen: false).fetchUser(userId);
+    });
+
+    return Consumer<UserProvider>(
+      builder: (context, userProvider, child) {
+        if (userProvider.isLoading) {
+          return Scaffold(
+            body: Container(
+              height: double.infinity,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    const Color.fromRGBO(250, 139, 0, 1),
+                    const Color.fromRGBO(248, 51, 60, 1)
+                  ],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
               ),
-            );
-          },
+              child: const Center(
+                  child: CircularProgressIndicator(color: Colors.white)),
+            ),
+          );
+        }
+
+        final user = userProvider.user;
+        if (user == null) {
+          return const Center(child: Text("Failed to load user data"));
+        }
+
+        return Scaffold(
+          appBar: AppBar(
+            title: Text(
+              user.name,
+              style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 28),
+            ),
+            backgroundColor: desertOrange,
+            actions: [
+              IconButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => ChatScreen()),
+                  );
+                },
+                icon: Image.asset(
+                  'assets/chat.png',
+                  width: 24, // Set appropriate width
+                  height: 24, // Set appropriate height
+                ),
+              ),
+            ],
+          ),
+          body: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  const Color.fromRGBO(250, 139, 0, 1),
+                  const Color.fromRGBO(248, 51, 60, 1)
+                ],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+            ),
+            child: Column(
+              children: [
+                const SizedBox(height: 20),
+                Center(
+                  child: CircleAvatar(
+                    radius: 70,
+                    backgroundImage: user.profileImage != null
+                        ? NetworkImage(user.profileImage!)
+                        : null,
+                    child: user.profileImage == null
+                        ? const Icon(Icons.person, size: 50)
+                        : null,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                const SizedBox(height: 20),
+                Expanded(
+                  child: ListView(
+                    children: [
+                      _buildListItem(
+                        Icons.cabin,
+                        "Favourite Camps",
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  favCampScreen(currentUserId: user.uid),
+                            ),
+                          );
+                        },
+                      ),
+                      _buildListItem(Icons.design_services, "Favourite Arts",onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  favArtScreen(currentUserId: user.uid),
+                            ),
+                          );
+                        },),
+                      _buildListItem(Icons.map, "Offline Maps",onTap: () {
+                         Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => MBTilesMapScreen()),
+                  );
+                      },),
+                    ],
+                  ),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    _showLogoutDialog(context);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white, // Button background color
+                    foregroundColor: Colors.red, // Text color
+                    padding: EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 15), // Button padding
+                    textStyle: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold), // Text style
+                    shape: RoundedRectangleBorder(
+                      borderRadius:
+                          BorderRadius.circular(18), // Rounded corners
+                    ),
+                  ),
+                  child: Text("Logout"), // Button text
+                ),
+                const SizedBox(height: 50),
+              ],
+            ),
+          ),
         );
       },
     );
@@ -85,8 +165,11 @@ class _ProfileTabState extends State<ProfileTab> {
 
   Widget _buildListItem(IconData icon, String title, {VoidCallback? onTap}) {
     return ListTile(
-      leading: Icon(icon),
-      title: Text(title),
+      leading: Icon(
+        icon,
+        color: Colors.white,
+      ),
+      title: Text(title, style: TextStyle(color: Colors.white)),
       onTap: onTap,
     );
   }
@@ -100,14 +183,14 @@ class _ProfileTabState extends State<ProfileTab> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text("Cancel"),
+            child: const Text("Cancel", style: TextStyle(color: desertOrange)),
           ),
           TextButton(
             onPressed: () {
               Navigator.pop(context);
-              widget.onLogout();
+              onLogout();
             },
-            child: const Text("Logout"),
+            child: const Text("Logout", style: TextStyle(color: Colors.red)),
           ),
         ],
       ),

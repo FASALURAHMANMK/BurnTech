@@ -1,39 +1,63 @@
-// art_screen.dart
-import 'package:burn_tech/models/color.dart';
+import 'package:burn_tech/models/user_model.dart';
 import 'package:burn_tech/screens/arts/art_card.dart';
 import 'package:burn_tech/screens/arts/art_details_screen.dart';
-import 'package:burn_tech/screens/arts/arts_screen_provider.dart';
-import 'package:burn_tech/screens/camps/user_provider.dart';
+import 'package:burn_tech/screens/arts/fav_art_screen_provider.dart';
 import 'package:burn_tech/screens/chat/chat_screen.dart';
-import 'package:burn_tech/screens/map/map_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:burn_tech/screens/camps/user_provider.dart';
+import 'package:burn_tech/models/color.dart';
 
-class ArtScreen extends StatefulWidget {
+class favArtScreen extends StatefulWidget {
   final String currentUserId;
-  const ArtScreen({Key? key, required this.currentUserId}) : super(key: key);
+
+  const favArtScreen({
+    Key? key,
+    required this.currentUserId,
+  }) : super(key: key);
 
   @override
-  State<ArtScreen> createState() => _ArtScreenState();
+  State<favArtScreen> createState() => _favArtScreenState();
 }
 
-class _ArtScreenState extends State<ArtScreen> {
+class _favArtScreenState extends State<favArtScreen> {
   late TextEditingController _searchController;
+  late favArtProvider favartProvider;
+  late UserModel currentUser;
+  bool _dataInitialized = false; // To ensure initialization only happens once
+
   @override
   void initState() {
     super.initState();
     _searchController = TextEditingController();
+
+    // Delay fetching user data until after the first frame is rendered.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (widget.currentUserId.isEmpty) {
         debugPrint("Error: currentUserId is empty!");
-        return;
+      } else {
+        final userProvider = Provider.of<UserProvider>(context, listen: false);
+        userProvider.fetchUser(widget.currentUserId);
       }
-      final userProvider = Provider.of<UserProvider>(context, listen: false);
-      userProvider.fetchUser(widget.currentUserId);
-
-      final artProvider = Provider.of<ArtProvider>(context, listen: false);
-      artProvider.fetchArt();
     });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Initialize the favcampProvider and fetch camp data only once when dependencies change.
+    if (!_dataInitialized) {
+      favartProvider = Provider.of<favArtProvider>(context, listen: false);
+      final userProvider = Provider.of<UserProvider>(context);
+      if (userProvider.user != null) {
+        currentUser = userProvider.user!;
+        // Schedule the initialization after the current frame.
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _initializeData();
+        });
+        _dataInitialized = true;
+      }
+    }
   }
 
   @override
@@ -42,30 +66,37 @@ class _ArtScreenState extends State<ArtScreen> {
     super.dispose();
   }
 
+  /// First fetch the camps, then update the favorite camps based on the current user.
+  Future<void> _initializeData() async {
+    await favartProvider.fetchArts();
+    favartProvider.updateFavoriteArts(currentUser);
+  }
+
   @override
   Widget build(BuildContext context) {
     final userProvider = Provider.of<UserProvider>(context);
-    final artProvider = Provider.of<ArtProvider>(context);
+    final favartProvider = Provider.of<favArtProvider>(context);
 
-    final isLoading = artProvider.isLoading;
-    final hasError = artProvider.error != null;
+    final isLoading = userProvider.isLoading || favartProvider.isLoading;
+    final hasError = userProvider.error != null || favartProvider.error != null;
 
     if (isLoading) {
       return Scaffold(
         body: Container(
-            height: 800,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  Color.fromRGBO(250, 139, 0, 1),
-                  Color.fromRGBO(248, 51, 60, 1)
-                ],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              ),
+          height: double.infinity,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                const Color.fromRGBO(250, 139, 0, 1),
+                const Color.fromRGBO(248, 51, 60, 1)
+              ],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
             ),
-            child:
-                Center(child: CircularProgressIndicator(color: Colors.white))),
+          ),
+          child: const Center(
+              child: CircularProgressIndicator(color: Colors.white)),
+        ),
       );
     }
 
@@ -73,28 +104,32 @@ class _ArtScreenState extends State<ArtScreen> {
       return Scaffold(
         body: Center(
           child: Text(
-            artProvider.error ?? "Unknown Error",
+            userProvider.error ?? favartProvider.error ?? "Unknown Error",
             style: const TextStyle(color: Colors.red),
           ),
         ),
       );
     }
+
     if (userProvider.user == null) {
       return const Scaffold(
         body: Center(child: Text("No user data found.")),
       );
     }
 
+    // Use the user data from the provider.
     final currentUser = userProvider.user!;
-    final artItems = artProvider.filteredArts;
+    final arts = favartProvider.filteredArts;
 
-    if (artItems.isEmpty) {
+    if (arts.isEmpty) {
       return Scaffold(
         appBar: AppBar(
           title: const Text(
-            'Arts',
+            'Favourite Arts',
             style: TextStyle(
-                color: Colors.white, fontWeight: FontWeight.bold, fontSize: 28),
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 28),
           ),
           backgroundColor: desertOrange,
           actions: [
@@ -107,8 +142,8 @@ class _ArtScreenState extends State<ArtScreen> {
               },
               icon: Image.asset(
                 'assets/chat.png',
-                width: 24, // Set appropriate width
-                height: 24, // Set appropriate height
+                width: 24,
+                height: 24,
               ),
             ),
           ],
@@ -126,8 +161,9 @@ class _ArtScreenState extends State<ArtScreen> {
           ),
           child: Column(
             children: [
-              _buildSearchBar(artProvider),
-              const Expanded(child: Center(child: Text("No Arts found."))),
+              _buildSearchBar(favartProvider),
+              const Expanded(
+                  child: Center(child: Text("No camps found."))),
             ],
           ),
         ),
@@ -137,9 +173,11 @@ class _ArtScreenState extends State<ArtScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          'Arts',
+          'Favourite Arts',
           style: TextStyle(
-              color: Colors.white, fontWeight: FontWeight.bold, fontSize: 28),
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 28),
         ),
         backgroundColor: desertOrange,
         actions: [
@@ -152,18 +190,18 @@ class _ArtScreenState extends State<ArtScreen> {
             },
             icon: Image.asset(
               'assets/chat.png',
-              width: 24, // Set appropriate width
-              height: 24, // Set appropriate height
+              width: 24,
+              height: 24,
             ),
           ),
         ],
       ),
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              Color.fromRGBO(250, 139, 0, 1),
-              Color.fromRGBO(248, 51, 60, 1)
+              const Color.fromRGBO(250, 139, 0, 1),
+              const Color.fromRGBO(248, 51, 60, 1)
             ],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
@@ -171,22 +209,21 @@ class _ArtScreenState extends State<ArtScreen> {
         ),
         child: Column(
           children: [
-            _buildSearchBar(artProvider),
+            _buildSearchBar(favartProvider),
             Expanded(
               child: ListView.builder(
-                itemCount: artItems.length,
+                itemCount: arts.length,
                 itemBuilder: (context, index) {
-                  final art = artItems[index];
+                  final art = arts[index];
                   return ArtCard(
                     art: art,
                     currentUser: currentUser,
                     onMapPressed: () {
-                      Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => MapTab(arts: [art],camps: []),
-                ),
-              );
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text("Map button clicked (placeholder)"),
+                        ),
+                      );
                     },
                     onFavoritePressed: () =>
                         userProvider.toggleArtFavorite(art),
@@ -194,7 +231,8 @@ class _ArtScreenState extends State<ArtScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => ArtDetailScreen(artId: art.uid ?? ''),
+                          builder: (_) => ArtDetailScreen(
+                              artId: art.uid ?? ''),
                         ),
                       );
                     },
@@ -208,10 +246,11 @@ class _ArtScreenState extends State<ArtScreen> {
     );
   }
 
-  Widget _buildSearchBar(ArtProvider artProvider) {
+  Widget _buildSearchBar(favArtProvider favartProvider) {
     return Container(
       margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
+      padding:
+          const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.9),
         borderRadius: BorderRadius.circular(18),
@@ -222,16 +261,14 @@ class _ArtScreenState extends State<ArtScreen> {
             child: TextField(
               controller: _searchController,
               decoration: const InputDecoration(
-                hintText: 'Search Arts...',
+                hintText: 'Search arts...',
                 border: InputBorder.none,
               ),
               onChanged: (value) {
-                // If the search field is empty, show full list.
                 if (value.trim().isEmpty) {
-                  artProvider.searchArts(
-                      ""); // Ensure your provider resets the filtered list on empty search.
+                  favartProvider.searchArts("");
                 } else {
-                  artProvider.searchArts(value);
+                  favartProvider.searchArts(value);
                 }
               },
             ),
@@ -239,9 +276,8 @@ class _ArtScreenState extends State<ArtScreen> {
           IconButton(
             icon: const Icon(Icons.search),
             onPressed: () {
-              // Trigger search when the search icon is pressed.
               final value = _searchController.text;
-              artProvider.searchArts(value);
+              favartProvider.searchArts(value);
             },
           ),
         ],

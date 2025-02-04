@@ -63,7 +63,10 @@ class _LoginScreenState extends State<LoginScreen> {
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
-                colors: [Color.fromRGBO(250, 139, 0, 1), Color.fromRGBO(248, 51, 60, 1)],
+                colors: [
+                  Color.fromRGBO(250, 139, 0, 1),
+                  Color.fromRGBO(248, 51, 60, 1)
+                ],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
               ),
@@ -72,7 +75,7 @@ class _LoginScreenState extends State<LoginScreen> {
           Center(
             child: SingleChildScrollView(
               child: Container(
-                margin: const EdgeInsets.symmetric(horizontal: 24),
+                margin: const EdgeInsets.symmetric(horizontal: 20),
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.9),
@@ -91,7 +94,6 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                       const SizedBox(height: 28),
-
                       TextFormField(
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
@@ -101,7 +103,8 @@ class _LoginScreenState extends State<LoginScreen> {
                           prefixIcon: Icon(Icons.email),
                           border: OutlineInputBorder(),
                           focusedBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: desertOrange, width: 2.0),
+                            borderSide:
+                                BorderSide(color: desertOrange, width: 2.0),
                           ),
                         ),
                         validator: (value) {
@@ -112,7 +115,6 @@ class _LoginScreenState extends State<LoginScreen> {
                         },
                       ),
                       const SizedBox(height: 16),
-
                       TextFormField(
                         controller: _passwordController,
                         obscureText: true,
@@ -122,7 +124,8 @@ class _LoginScreenState extends State<LoginScreen> {
                           prefixIcon: Icon(Icons.lock),
                           border: OutlineInputBorder(),
                           focusedBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: desertOrange, width: 2.0),
+                            borderSide:
+                                BorderSide(color: desertOrange, width: 2.0),
                           ),
                         ),
                         validator: (value) {
@@ -133,7 +136,6 @@ class _LoginScreenState extends State<LoginScreen> {
                         },
                       ),
                       const SizedBox(height: 10),
-
                       Align(
                         alignment: Alignment.centerRight,
                         child: TextButton(
@@ -145,7 +147,6 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                       const SizedBox(height: 16),
-
                       SizedBox(
                         width: double.infinity,
                         height: 48,
@@ -156,17 +157,20 @@ class _LoginScreenState extends State<LoginScreen> {
                               borderRadius: BorderRadius.circular(8),
                             ),
                           ),
-                          onPressed: authProvider.isLoading ? null : () => _validateAndLogin(context),
+                          onPressed: authProvider.isLoading
+                              ? null
+                              : () => _validateAndLogin(context),
                           child: authProvider.isLoading
-                              ? const CircularProgressIndicator(color: Colors.white)
+                              ? const CircularProgressIndicator(
+                                  color: Colors.white)
                               : const Text(
                                   'LOGIN',
-                                  style: TextStyle(fontSize: 16, color: Colors.white),
+                                  style: TextStyle(
+                                      fontSize: 16, color: Colors.white),
                                 ),
                         ),
                       ),
                       const SizedBox(height: 24),
-
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -175,13 +179,30 @@ class _LoginScreenState extends State<LoginScreen> {
                             onTap: _goToSignUp,
                             child: const Text(
                               "Sign Up",
-                              style: TextStyle(color: desertOrange, fontWeight: FontWeight.bold),
+                              style: TextStyle(
+                                  color: desertOrange,
+                                  fontWeight: FontWeight.bold),
                             ),
                           ),
                         ],
                       ),
                     ],
                   ),
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            top: 120,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: Text(
+                'BurnTech',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 40,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
             ),

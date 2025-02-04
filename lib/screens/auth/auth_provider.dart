@@ -19,30 +19,32 @@ class AuthProvider extends ChangeNotifier {
     uid = prefs.getString('uid');
     notifyListeners();
   }
-  Future<void> loginUser(String email, String password) async {
-    _isLoading = true;
-    _errorMessage = null;
+ Future<void> loginUser(String email, String password) async {
+  _isLoading = true;
+  _errorMessage = null;
+  notifyListeners();
+
+  try {
+    final UserCredential userCredential = await _auth.signInWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
+
+    // Directly assign to the class-level uid field instead of creating a local variable.
+    uid = userCredential.user!.uid;
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('uid', uid!);
+    _isLoggedIn = true;
+  } on FirebaseAuthException catch (e) {
+    _errorMessage = e.message;
+  } catch (e) {
+    _errorMessage = "An unexpected error occurred.";
+  } finally {
+    _isLoading = false;
     notifyListeners();
-
-    try {
-      final UserCredential userCredential = await _auth.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-
-      final String uid = userCredential.user!.uid;
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('uid', uid);
-      _isLoggedIn = true;
-    } on FirebaseAuthException catch (e) {
-      _errorMessage = e.message;
-    } catch (e) {
-      _errorMessage = "An unexpected error occurred.";
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
   }
+}
 
   Future<void> logoutUser(BuildContext context) async {
     await _auth.signOut();

@@ -32,7 +32,7 @@ class HomeScreen extends StatelessWidget {
     final authProvider = Provider.of<AuthProvider>(context);
     final List<Widget> pages = [
       const HomeTab(),
-      MapTab(camps: homeProvider.camps),
+      MapTab(camps: homeProvider.camps,arts: homeProvider.arts,),
       CampScreen(currentUserId:authProvider.uid ?? ''),
       ArtScreen(currentUserId:authProvider.uid ?? ''),
       ProfileTab(onLogout: () async => await _handleLogout(context),userId: authProvider.uid??'',),

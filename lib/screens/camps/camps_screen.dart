@@ -1,10 +1,11 @@
+import 'package:burn_tech/screens/camps/camp_card.dart';
 import 'package:burn_tech/screens/camps/camp_details_screen.dart';
 import 'package:burn_tech/screens/camps/camp_screen_provider.dart';
 import 'package:burn_tech/screens/chat/chat_screen.dart';
+import 'package:burn_tech/screens/map/map_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:burn_tech/screens/camps/user_provider.dart';
-import 'package:burn_tech/models/camp_model.dart';
 import 'package:burn_tech/models/color.dart'; 
 
 class CampScreen extends StatefulWidget {
@@ -46,11 +47,6 @@ class _CampScreenState extends State<CampScreen> {
     _searchController.dispose();
     super.dispose();
   }
-
-  /// Distance placeholders
-  String _getWalkingDistance(CampModel camp) => "5 min";
-  String _getCyclingDistance(CampModel camp) => "2 min";
-  String _getDrivingDistance(CampModel camp) => "1 min";
 
   @override
   Widget build(BuildContext context) {
@@ -188,116 +184,28 @@ class _CampScreenState extends State<CampScreen> {
                 itemCount: camps.length,
                 itemBuilder: (context, index) {
                   final camp = camps[index];
+                  return CampCard(
+      camp: camp,
+      currentUser: currentUser,
+      onMapPressed: () {
+         Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => MapTab(arts: [],camps: [camp]),
+                ),
+              );
+      },
+      onFavoritePressed: () => userProvider.toggleFavorite(camp),
+      onTapDetails: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => CampDetailsScreen(campId: camp.uid ?? ''),
+          ),
+        );
+      },
+    );
 
-                  // Check if user has favorited this camp
-                  final isFavorite = currentUser.favCamps?.contains(camp.uid) ?? false;
-                  final haveToken = currentUser.campTokens?.contains(camp.uid) ?? false;
-
-                  // Distance placeholders
-                  final walkingDistance = _getWalkingDistance(camp);
-                  final cyclingDistance = _getCyclingDistance(camp);
-                  final drivingDistance = _getDrivingDistance(camp);
-
-                  return Card(
-                    shape: RoundedRectangleBorder(
-    borderRadius: BorderRadius.circular(18), // Change 20.0 to your desired radius
-  ),
-                    margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                    child: ListTile(
-                      title: Text(
-                        camp.name ?? 'Unnamed Camp',
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const SizedBox(height: 10),
-                          // Distances row
-                          Wrap(
-                            spacing: 12,
-                            runSpacing: 8,
-                            crossAxisAlignment: WrapCrossAlignment.center,
-                            children: [
-                              // Walking distance
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(Icons.directions_walk, size: 16, color: Colors.green),
-                                  const SizedBox(width: 4),
-                                  Text(walkingDistance, style: const TextStyle(color: Colors.green)),
-                                ],
-                              ),
-                              // Cycling distance
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(Icons.directions_bike, size: 16, color: Colors.green),
-                                  const SizedBox(width: 4),
-                                  Text(cyclingDistance, style: const TextStyle(color: Colors.green)),
-                                ],
-                              ),
-                              // Driving distance
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(Icons.directions_car, size: 16, color: Colors.green),
-                                  const SizedBox(width: 4),
-                                  Text(drivingDistance, style: const TextStyle(color: Colors.green)),
-                                ],
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          // Map, Ticket, Favorite
-                          Wrap(
-                            spacing: 12,
-                            runSpacing: 8,
-                            crossAxisAlignment: WrapCrossAlignment.center,
-                            children: [
-                              // Map button
-                              IconButton(
-                                icon: const Icon(Icons.map, color: Colors.blue),
-                                onPressed: () {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text("Map button clicked (placeholder)"),
-                                    ),
-                                  );
-                                },
-                              ),
-                              // Ticket status
-                              IconButton(
-                                icon: Icon(
-                                  Icons.confirmation_num,
-                                  color: haveToken ? Colors.green : desertOrange,
-                                ),
-                                onPressed: () => userProvider.updateTokens(camp),
-                              ),
-                              // Favorite icon
-                              IconButton(
-                                icon: Icon(
-                                  isFavorite ? Icons.favorite : Icons.favorite_border,
-                                  color: isFavorite ? Colors.red : Colors.grey,
-                                ),
-                                onPressed: () => userProvider.toggleFavorite(camp),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                      trailing: IconButton(
-                        icon: const Icon(Icons.arrow_forward_ios),
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => CampDetailsScreen(campId: camp.uid ?? ''),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  );
                 },
               ),
             ),

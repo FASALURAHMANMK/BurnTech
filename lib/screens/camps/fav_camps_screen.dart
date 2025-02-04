@@ -1,39 +1,64 @@
-// art_screen.dart
-import 'package:burn_tech/models/color.dart';
-import 'package:burn_tech/screens/arts/art_card.dart';
-import 'package:burn_tech/screens/arts/art_details_screen.dart';
-import 'package:burn_tech/screens/arts/arts_screen_provider.dart';
-import 'package:burn_tech/screens/camps/user_provider.dart';
+import 'package:burn_tech/models/user_model.dart';
+import 'package:burn_tech/screens/camps/camp_card.dart';
+import 'package:burn_tech/screens/camps/camp_details_screen.dart';
+import 'package:burn_tech/screens/camps/fav_camp_screen_provider.dart';
 import 'package:burn_tech/screens/chat/chat_screen.dart';
 import 'package:burn_tech/screens/map/map_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:burn_tech/screens/camps/user_provider.dart';
+import 'package:burn_tech/models/color.dart';
 
-class ArtScreen extends StatefulWidget {
+class favCampScreen extends StatefulWidget {
   final String currentUserId;
-  const ArtScreen({Key? key, required this.currentUserId}) : super(key: key);
+
+  const favCampScreen({
+    Key? key,
+    required this.currentUserId,
+  }) : super(key: key);
 
   @override
-  State<ArtScreen> createState() => _ArtScreenState();
+  State<favCampScreen> createState() => _favCampScreenState();
 }
 
-class _ArtScreenState extends State<ArtScreen> {
+class _favCampScreenState extends State<favCampScreen> {
   late TextEditingController _searchController;
+  late favCampProvider favcampProvider;
+  late UserModel currentUser;
+  bool _dataInitialized = false; // To ensure initialization only happens once
+
   @override
   void initState() {
     super.initState();
     _searchController = TextEditingController();
+
+    // Delay fetching user data until after the first frame is rendered.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (widget.currentUserId.isEmpty) {
         debugPrint("Error: currentUserId is empty!");
-        return;
+      } else {
+        final userProvider = Provider.of<UserProvider>(context, listen: false);
+        userProvider.fetchUser(widget.currentUserId);
       }
-      final userProvider = Provider.of<UserProvider>(context, listen: false);
-      userProvider.fetchUser(widget.currentUserId);
-
-      final artProvider = Provider.of<ArtProvider>(context, listen: false);
-      artProvider.fetchArt();
     });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Initialize the favcampProvider and fetch camp data only once when dependencies change.
+    if (!_dataInitialized) {
+      favcampProvider = Provider.of<favCampProvider>(context, listen: false);
+      final userProvider = Provider.of<UserProvider>(context);
+      if (userProvider.user != null) {
+        currentUser = userProvider.user!;
+        // Schedule the initialization after the current frame.
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _initializeData();
+        });
+        _dataInitialized = true;
+      }
+    }
   }
 
   @override
@@ -42,30 +67,37 @@ class _ArtScreenState extends State<ArtScreen> {
     super.dispose();
   }
 
+  /// First fetch the camps, then update the favorite camps based on the current user.
+  Future<void> _initializeData() async {
+    await favcampProvider.fetchCamps();
+    favcampProvider.updateFavoriteCamps(currentUser);
+  }
+
   @override
   Widget build(BuildContext context) {
     final userProvider = Provider.of<UserProvider>(context);
-    final artProvider = Provider.of<ArtProvider>(context);
+    final favcampProvider = Provider.of<favCampProvider>(context);
 
-    final isLoading = artProvider.isLoading;
-    final hasError = artProvider.error != null;
+    final isLoading = userProvider.isLoading || favcampProvider.isLoading;
+    final hasError = userProvider.error != null || favcampProvider.error != null;
 
     if (isLoading) {
       return Scaffold(
         body: Container(
-            height: 800,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  Color.fromRGBO(250, 139, 0, 1),
-                  Color.fromRGBO(248, 51, 60, 1)
-                ],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              ),
+          height: double.infinity,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                const Color.fromRGBO(250, 139, 0, 1),
+                const Color.fromRGBO(248, 51, 60, 1)
+              ],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
             ),
-            child:
-                Center(child: CircularProgressIndicator(color: Colors.white))),
+          ),
+          child: const Center(
+              child: CircularProgressIndicator(color: Colors.white)),
+        ),
       );
     }
 
@@ -73,28 +105,32 @@ class _ArtScreenState extends State<ArtScreen> {
       return Scaffold(
         body: Center(
           child: Text(
-            artProvider.error ?? "Unknown Error",
+            userProvider.error ?? favcampProvider.error ?? "Unknown Error",
             style: const TextStyle(color: Colors.red),
           ),
         ),
       );
     }
+
     if (userProvider.user == null) {
       return const Scaffold(
         body: Center(child: Text("No user data found.")),
       );
     }
 
+    // Use the user data from the provider.
     final currentUser = userProvider.user!;
-    final artItems = artProvider.filteredArts;
+    final camps = favcampProvider.filteredCamps;
 
-    if (artItems.isEmpty) {
+    if (camps.isEmpty) {
       return Scaffold(
         appBar: AppBar(
           title: const Text(
-            'Arts',
+            'Favourite Camps',
             style: TextStyle(
-                color: Colors.white, fontWeight: FontWeight.bold, fontSize: 28),
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 28),
           ),
           backgroundColor: desertOrange,
           actions: [
@@ -107,8 +143,8 @@ class _ArtScreenState extends State<ArtScreen> {
               },
               icon: Image.asset(
                 'assets/chat.png',
-                width: 24, // Set appropriate width
-                height: 24, // Set appropriate height
+                width: 24,
+                height: 24,
               ),
             ),
           ],
@@ -126,8 +162,9 @@ class _ArtScreenState extends State<ArtScreen> {
           ),
           child: Column(
             children: [
-              _buildSearchBar(artProvider),
-              const Expanded(child: Center(child: Text("No Arts found."))),
+              _buildSearchBar(favcampProvider),
+              const Expanded(
+                  child: Center(child: Text("No camps found."))),
             ],
           ),
         ),
@@ -137,9 +174,11 @@ class _ArtScreenState extends State<ArtScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          'Arts',
+          'Favourite Camps',
           style: TextStyle(
-              color: Colors.white, fontWeight: FontWeight.bold, fontSize: 28),
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 28),
         ),
         backgroundColor: desertOrange,
         actions: [
@@ -152,18 +191,18 @@ class _ArtScreenState extends State<ArtScreen> {
             },
             icon: Image.asset(
               'assets/chat.png',
-              width: 24, // Set appropriate width
-              height: 24, // Set appropriate height
+              width: 24,
+              height: 24,
             ),
           ),
         ],
       ),
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              Color.fromRGBO(250, 139, 0, 1),
-              Color.fromRGBO(248, 51, 60, 1)
+              const Color.fromRGBO(250, 139, 0, 1),
+              const Color.fromRGBO(248, 51, 60, 1)
             ],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
@@ -171,30 +210,31 @@ class _ArtScreenState extends State<ArtScreen> {
         ),
         child: Column(
           children: [
-            _buildSearchBar(artProvider),
+            _buildSearchBar(favcampProvider),
             Expanded(
               child: ListView.builder(
-                itemCount: artItems.length,
+                itemCount: camps.length,
                 itemBuilder: (context, index) {
-                  final art = artItems[index];
-                  return ArtCard(
-                    art: art,
+                  final camp = camps[index];
+                  return CampCard(
+                    camp: camp,
                     currentUser: currentUser,
                     onMapPressed: () {
                       Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => MapTab(arts: [art],camps: []),
+                  builder: (_) => MapTab(arts: [],camps: [camp]),
                 ),
               );
                     },
                     onFavoritePressed: () =>
-                        userProvider.toggleArtFavorite(art),
+                        userProvider.toggleFavorite(camp),
                     onTapDetails: () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => ArtDetailScreen(artId: art.uid ?? ''),
+                          builder: (_) => CampDetailsScreen(
+                              campId: camp.uid ?? ''),
                         ),
                       );
                     },
@@ -208,10 +248,11 @@ class _ArtScreenState extends State<ArtScreen> {
     );
   }
 
-  Widget _buildSearchBar(ArtProvider artProvider) {
+  Widget _buildSearchBar(favCampProvider favcampProvider) {
     return Container(
       margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
+      padding:
+          const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.9),
         borderRadius: BorderRadius.circular(18),
@@ -222,16 +263,14 @@ class _ArtScreenState extends State<ArtScreen> {
             child: TextField(
               controller: _searchController,
               decoration: const InputDecoration(
-                hintText: 'Search Arts...',
+                hintText: 'Search camps...',
                 border: InputBorder.none,
               ),
               onChanged: (value) {
-                // If the search field is empty, show full list.
                 if (value.trim().isEmpty) {
-                  artProvider.searchArts(
-                      ""); // Ensure your provider resets the filtered list on empty search.
+                  favcampProvider.searchCamps("");
                 } else {
-                  artProvider.searchArts(value);
+                  favcampProvider.searchCamps(value);
                 }
               },
             ),
@@ -239,9 +278,8 @@ class _ArtScreenState extends State<ArtScreen> {
           IconButton(
             icon: const Icon(Icons.search),
             onPressed: () {
-              // Trigger search when the search icon is pressed.
               final value = _searchController.text;
-              artProvider.searchArts(value);
+              favcampProvider.searchCamps(value);
             },
           ),
         ],

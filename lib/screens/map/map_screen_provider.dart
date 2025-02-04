@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:burn_tech/models/art_model.dart';
 import 'package:burn_tech/models/camp_model.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -15,8 +16,12 @@ class MapProvider extends ChangeNotifier {
   LatLng? _selectedMarkerPosition;
   String? _selectedMarkerTitle;
   String? _selectedMarkerId;
-  // List of CampModel (with latitude & longitude at top level).
+  // New flag: true if the selected marker is a camp, false if it is an art location.
+  bool? _selectedMarkerIsCamp;
+
+  // List of camps and arts.
   late List<CampModel> _camps;
+  late List<ArtModel> _arts;
 
   static const LatLng _defaultCenter = LatLng(40.7864, -119.2065);
   static const double _defaultZoom = 14.0;
@@ -32,6 +37,7 @@ class MapProvider extends ChangeNotifier {
   LatLng? get selectedMarkerPosition => _selectedMarkerPosition;
   String? get selectedMarkerTitle => _selectedMarkerTitle;
   String? get selectedMarkerId => _selectedMarkerId;
+  bool? get selectedMarkerIsCamp => _selectedMarkerIsCamp;
   // Expose the map controller.
   GoogleMapController? get mapController => _mapController;
 
@@ -42,28 +48,25 @@ class MapProvider extends ChangeNotifier {
   /// Initialize markers from a list of CampModel.
   Future<void> initMarkers(List<CampModel> camps) async {
     _camps = camps;
-    _markers.clear();
-
+    // Remove existing camp markers if needed.
+    _markers.removeWhere((m) => m.markerId.value.startsWith('camp_'));
     for (final camp in _camps) {
-      // Skip camps with missing coordinates.
       if (camp.latitude == null || camp.longitude == null) continue;
       final double lat = camp.latitude!;
       final double lng = camp.longitude!;
-      // Optionally skip if lat/lon are both zero.
       if (lat == 0.0 && lng == 0.0) continue;
 
-      // Create a markerId using uid if available, else the camp name.
-      final markerId = MarkerId(camp.uid ?? camp.name ?? 'unknown_camp');
+      // Prefix the markerId to avoid conflicts.
+      final markerId = MarkerId('camp_${camp.uid ?? camp.name ?? 'unknown'}');
 
       final marker = Marker(
         markerId: markerId,
         position: LatLng(lat, lng),
         onTap: () {
-          // Instead of showing the native info window,
-          // set the selected marker (position and title) and notify.
           _selectedMarkerPosition = LatLng(lat, lng);
           _selectedMarkerTitle = camp.name ?? 'Unnamed Camp';
           _selectedMarkerId = camp.uid ?? 'Unnamed Camp';
+          _selectedMarkerIsCamp = true;
           notifyListeners();
         },
         // Disable the native info window.
@@ -71,10 +74,49 @@ class MapProvider extends ChangeNotifier {
       );
       _markers.add(marker);
     }
-
     notifyListeners();
   }
+Future<void> initArtMarkers(List<ArtModel> arts) async {
+    _arts = arts;
+    // Remove existing art markers if needed.
+    _markers.removeWhere((m) => m.markerId.value.startsWith('art_'));
+    for (final art in _arts) {
+      // Ensure location exists and has valid coordinates.
+      if (art.location == null ||
+          art.location!.gpsLatitude == null ||
+          art.location!.gpsLongitude == null) continue;
 
+      final double lat = art.location!.gpsLatitude!;
+      final double lng = art.location!.gpsLongitude!;
+      if (lat == 0.0 && lng == 0.0) continue;
+
+      final markerId = MarkerId('art_${art.uid ?? art.name ?? 'unknown'}');
+
+      final marker = Marker(
+        markerId: markerId,
+        position: LatLng(lat, lng),
+        onTap: () {
+          _selectedMarkerPosition = LatLng(lat, lng);
+          _selectedMarkerTitle = art.name ?? 'Unnamed Art';
+          _selectedMarkerId = art.uid ?? 'Unnamed Art';
+          _selectedMarkerIsCamp = false;
+          notifyListeners();
+        },
+        infoWindow: InfoWindow.noText,
+        // Optionally, use a different icon for arts:
+        // icon: BitmapDescriptor.fromAsset('assets/art_marker.png'),
+      );
+      _markers.add(marker);
+    }
+    notifyListeners();
+  }
+   void clearSelectedMarker() {
+    _selectedMarkerPosition = null;
+    _selectedMarkerTitle = null;
+    _selectedMarkerId = null;
+    _selectedMarkerIsCamp = null;
+    notifyListeners();
+  }
   /// Called when an info window is tapped.
   /// (Not used in the custom overlay, but left here for potential future use.
 
@@ -103,36 +145,76 @@ class MapProvider extends ChangeNotifier {
 
   /// Search for a camp by name and move the camera to that camp's location.
   void searchCamp(String query, BuildContext context) {
-    // Find the first matching camp by name (case-insensitive).
-    final camp = _camps.firstWhere(
-      (c) => (c.name?.toLowerCase() ?? '') == query.toLowerCase(),
-      orElse: () => CampModel(name: '', latitude: 0, longitude: 0),
+  // Convert the query to lower case for a case-insensitive search.
+  final searchQuery = query.toLowerCase();
+
+  // First, try to find a matching camp.
+  final camp = _camps.firstWhere(
+    (c) => (c.name?.toLowerCase() ?? '').contains(searchQuery),
+    orElse: () => CampModel(name: '', latitude: 0, longitude: 0),
+  );
+
+  if (camp.name != null && camp.name!.isNotEmpty) {
+    final double lat = camp.latitude ?? 0.0;
+    final double lng = camp.longitude ?? 0.0;
+
+    // Animate the camera to the camp location.
+    _mapController?.animateCamera(
+      CameraUpdate.newLatLngZoom(LatLng(lat, lng), 18.0),
     );
 
-    if (camp.name != null && camp.name!.isNotEmpty) {
-      final double lat = camp.latitude ?? 0.0;
-      final double lng = camp.longitude ?? 0.0;
+    // Set the selected marker info for the camp.
+    _selectedMarkerPosition = LatLng(lat, lng);
+    _selectedMarkerTitle = camp.name;
+    _selectedMarkerId = camp.uid;
+    // Set the marker type flag to true for a camp.
+    _selectedMarkerIsCamp = true;
+    notifyListeners();
 
-      // Animate the camera to the camp location.
-      _mapController?.animateCamera(
-        CameraUpdate.newLatLngZoom(LatLng(lat, lng), 18.0),
-      );
-
-      // Simulate marker tap by setting the selected marker info.
-      _selectedMarkerPosition = LatLng(lat, lng);
-      _selectedMarkerTitle = camp.name;
-      _selectedMarkerId = camp.uid;
-      notifyListeners();
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Navigating to ${camp.name}')),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('No camp found for "$query"')),
-      );
-    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Navigating to camp: ${camp.name}')),
+    );
+    return;
   }
+
+  // If no matching camp was found, try to find a matching art.
+  final art = _arts.firstWhere(
+    (a) => (a.name?.toLowerCase() ?? '').contains(searchQuery),
+    orElse: () => ArtModel(name: '', location: null),
+  );
+
+  if (art.name != null &&
+      art.name!.isNotEmpty &&
+      art.location != null &&
+      art.location!.gpsLatitude != null &&
+      art.location!.gpsLongitude != null) {
+    final double lat = art.location!.gpsLatitude!;
+    final double lng = art.location!.gpsLongitude!;
+
+    // Animate the camera to the art location.
+    _mapController?.animateCamera(
+      CameraUpdate.newLatLngZoom(LatLng(lat, lng), 18.0),
+    );
+
+    // Set the selected marker info for the art.
+    _selectedMarkerPosition = LatLng(lat, lng);
+    _selectedMarkerTitle = art.name;
+    _selectedMarkerId = art.uid;
+    // Set the marker type flag to false for an art marker.
+    _selectedMarkerIsCamp = false;
+    notifyListeners();
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Navigating to art: ${art.name}')),
+    );
+    return;
+  }
+
+  // If no camp or art is found, show a message.
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(content: Text('No camp or art found for "$query"')),
+  );
+}
 
   /// Draw a route from current location to the selected marker.
   Future<void> drawRoute() async {
@@ -212,11 +294,5 @@ class MapProvider extends ChangeNotifier {
     } catch (e) {
       debugPrint('Error launching navigation: $e');
     }
-  }
-
-  void clearSelectedMarker() {
-    _selectedMarkerPosition = null;
-    _selectedMarkerTitle = null;
-    notifyListeners();
   }
 }

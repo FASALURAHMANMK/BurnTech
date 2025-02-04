@@ -1,5 +1,7 @@
+import 'package:burn_tech/models/art_model.dart';
 import 'package:burn_tech/models/camp_model.dart';
 import 'package:burn_tech/models/color.dart';
+import 'package:burn_tech/screens/arts/art_details_screen.dart';
 import 'package:burn_tech/screens/camps/camp_details_screen.dart';
 import 'package:burn_tech/screens/chat/chat_screen.dart';
 import 'package:burn_tech/screens/map/map_screen_provider.dart';
@@ -9,8 +11,9 @@ import 'package:provider/provider.dart';
 
 class MapTab extends StatefulWidget {
   final List<CampModel> camps;
+  final List<ArtModel> arts; // New list for arts
 
-  const MapTab({Key? key, required this.camps}) : super(key: key);
+  const MapTab({Key? key, required this.camps, required this.arts}) : super(key: key);
 
   @override
   _MapTabState createState() => _MapTabState();
@@ -47,9 +50,43 @@ class _MapTabState extends State<MapTab> {
     return ChangeNotifierProvider(
       create: (_) => MapProvider()
         ..initMarkers(widget.camps)
+        ..initArtMarkers(widget.arts)
         ..getCurrentLocation(),
       child: Consumer<MapProvider>(
         builder: (context, mapProvider, child) {
+
+          LatLng? initialCenter;
+double initialZoom = mapProvider.defaultZoom;
+bool showmyloc = true;
+// Focus on camp if there's exactly one valid camp.
+if (widget.camps.length == 1 &&
+    widget.camps[0].latitude != null &&
+    widget.camps[0].longitude != null &&
+    (widget.camps[0].latitude != 0.0 || widget.camps[0].longitude != 0.0)) {
+  initialCenter = LatLng(widget.camps[0].latitude!, widget.camps[0].longitude!);
+  initialZoom = 18.0;
+  showmyloc = false;
+}
+
+// If no valid camp was found, try to use a valid art if there's exactly one.
+if (initialCenter == null && widget.arts.length == 1) {
+  final art = widget.arts[0];
+  if (art.location != null &&
+      art.location!.gpsLatitude != null &&
+      art.location!.gpsLongitude != null &&
+      (art.location!.gpsLatitude != 0.0 || art.location!.gpsLongitude != 0.0)) {
+    initialCenter = LatLng(art.location!.gpsLatitude!, art.location!.gpsLongitude!);
+    initialZoom = 18.0;
+    setState(() {
+      showmyloc = false;
+    });
+    
+  }
+}
+
+// Fallback to the default center if nothing was found.
+initialCenter ??= mapProvider.defaultCenter;
+
           // Schedule updating or clearing the info window offset after the build phase.
           if (mapProvider.isMarkerSelected) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -98,19 +135,18 @@ class _MapTabState extends State<MapTab> {
                     }
                   },
                   onCameraMove: (position) {
-                    // Update the info window position as the camera moves.
                     if (mapProvider.isMarkerSelected) {
                       _updateInfoWindowOffset(mapProvider);
                     }
                   },
                   initialCameraPosition: CameraPosition(
-                    target: mapProvider.defaultCenter,
-                    zoom: mapProvider.defaultZoom,
+                    target: initialCenter,
+                    zoom: initialZoom,
                   ),
                   markers: mapProvider.markers,
                   polylines: mapProvider.polylines,
                   myLocationEnabled: true,
-                  myLocationButtonEnabled: true,
+                  myLocationButtonEnabled: showmyloc,
                   onTap: (_) {
                     mapProvider.clearSelectedMarker();
                     setState(() {
@@ -119,21 +155,19 @@ class _MapTabState extends State<MapTab> {
                   },
                 ),
                 _buildSearchBar(context, mapProvider),
-                // Custom Info Window overlay.
                 if (mapProvider.isMarkerSelected && _infoWindowOffset != null)
                   Positioned(
-                    left: _infoWindowOffset!.dx + 50, // Adjust horizontal offset (half of 150 width)
-                    top: _infoWindowOffset!.dy + 100,  // Adjust vertical offset as needed
+                    left: _infoWindowOffset!.dx + 50,
+                    top: _infoWindowOffset!.dy + 100,
                     child: CustomInfoWindow(
                       title: mapProvider.selectedMarkerTitle ?? '',
-                      id: mapProvider.selectedMarkerId??'',
-                      isCamp: true,
+                      id: mapProvider.selectedMarkerId ?? '',
+                      isCamp: mapProvider.selectedMarkerIsCamp ?? true,
                     ),
                   ),
-                // Directions button overlay.
                 if (mapProvider.isMarkerSelected)
                   Positioned(
-                    bottom: 20,
+                    bottom: 40,
                     left: 0,
                     right: 0,
                     child: Align(
@@ -206,17 +240,21 @@ class _MapTabState extends State<MapTab> {
   }
 }
 
-/// A simple custom info window widget.
 class CustomInfoWindow extends StatelessWidget {
   final String title;
   final String id;
   final bool isCamp;
-  const CustomInfoWindow({Key? key, required this.title,required this.id,required this.isCamp}) : super(key: key);
+  
+  const CustomInfoWindow({
+    Key? key,
+    required this.title,
+    required this.id,
+    required this.isCamp,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Material(
-      // Use a transparent material so that any shadows show up properly.
       color: Colors.transparent,
       child: Container(
         width: 150,
@@ -234,35 +272,37 @@ class CustomInfoWindow extends StatelessWidget {
         ),
         child: GestureDetector(
           onTap: () {
-            isCamp?
-             Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => CampDetailsScreen(campId:id),
-                      ),
-                    ):
-                     Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => CampDetailsScreen(campId:id),
-                      ),
-                    );
+            if (isCamp) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => CampDetailsScreen(campId: id),
+                ),
+              );
+            } else {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => ArtDetailScreen(artId: id),
+                ),
+              );
+            }
           },
-         child:Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              title,
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 4),
-            const Text(
-              "Tap for details",
-              style: TextStyle(fontSize: 12),
-            ),
-          ],
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                isCamp?'Camp : $title':'Art : $title',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                "Tap for details",
+                style: TextStyle(fontSize: 12),
+              ),
+            ],
+          ),
         ),
-      ),
       ),
     );
   }
