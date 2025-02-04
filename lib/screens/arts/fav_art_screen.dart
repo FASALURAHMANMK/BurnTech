@@ -3,6 +3,7 @@ import 'package:burn_tech/screens/arts/art_card.dart';
 import 'package:burn_tech/screens/arts/art_details_screen.dart';
 import 'package:burn_tech/screens/arts/fav_art_screen_provider.dart';
 import 'package:burn_tech/screens/chat/chat_screen.dart';
+import 'package:burn_tech/screens/map/map_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:burn_tech/screens/camps/user_provider.dart';
@@ -219,11 +220,12 @@ class _favArtScreenState extends State<favArtScreen> {
                     art: art,
                     currentUser: currentUser,
                     onMapPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text("Map button clicked (placeholder)"),
-                        ),
-                      );
+                      Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => MapTab(arts: [art],camps: []),
+                ),
+              );
                     },
                     onFavoritePressed: () =>
                         userProvider.toggleArtFavorite(art),

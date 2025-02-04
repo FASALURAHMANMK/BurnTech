@@ -77,10 +77,14 @@ if (initialCenter == null && widget.arts.length == 1) {
       (art.location!.gpsLatitude != 0.0 || art.location!.gpsLongitude != 0.0)) {
     initialCenter = LatLng(art.location!.gpsLatitude!, art.location!.gpsLongitude!);
     initialZoom = 18.0;
-    setState(() {
-      showmyloc = false;
+    // Schedule the state update after the build is complete:
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        setState(() {
+          showmyloc = false;
+        });
+      }
     });
-    
   }
 }
 
